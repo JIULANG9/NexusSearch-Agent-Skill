@@ -1,0 +1,4224 @@
+{
+  "schema_version": 1,
+  "graph_id": "graph_6aa458ee_8d879f",
+  "created_at": "2026-09-11T19:39:26+00:00",
+  "updated_at": "2026-09-11T21:41:18+00:00",
+  "goal": {
+    "id": "goal",
+    "title": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型",
+    "summary": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型",
+    "constraints": [
+      "只能使用本地 MCP 服务获取外部资料，禁止上传任何源码或数据。",
+      "结论必须有可追溯来源与置信度，单个来源不得支撑关键结论。",
+      "需给出 6 周内的迁移路线与回滚方案。"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "c1",
+      "type": "claim",
+      "title": "AutoGen 不再适合作为新建项目的长期独立选型：微软官方称 Agent Framework 是 AutoGen 与 Semantic Kernel 的直接后继",
+      "body": "AutoGen stable 文档仍以独立框架发布（Studio/AgentChat/Core/Extensions），但微软 Agent Framework 概览页写明其为 AutoGen 与 Semantic Kernel 的直接后继并由同一团队创建。两条一手来源并存，说明编排层 API 正在收敛期，独立押注 AutoGen 存在二次迁移风险。",
+      "status": "verified",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_24881d",
+        "ev_6aa46d36_b36158",
+        "ev_6aa46e42_eb6819",
+        "ev_6aa471b9_344a72"
+      ],
+      "tags": [
+        "landscape",
+        "framework-churn"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c2",
+      "type": "claim",
+      "title": "LangGraph 的定位是低层编排运行时，核心价值是 durable execution、持久化 checkpointer、streaming 与 human-in-the-loop",
+      "body": "官方概览：LangGraph is a low-level orchestration framework and runtime for building, managing, and deploying long-running, stateful agents；并自述 very low-level, focused entirely on agent orchestration。与本项目需求（可恢复的多步研究循环）高度匹配，代价是需要自行组合 prompt 与 agent 抽象。",
+      "status": "verified",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_41eb66",
+        "ev_6aa46e42_e78db7",
+        "ev_6aa46e42_333fb9"
+      ],
+      "tags": [
+        "architecture",
+        "primary-source"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c3",
+      "type": "claim",
+      "title": "OpenAI Agents SDK 以少量原语（handoffs / guardrails / sessions）覆盖多 Agent 委派与输入校验，学习成本最低，但缺少图级可恢复执行",
+      "body": "官方文档：Sessions 是维持 agent 循环上下文的持久记忆层，Handoffs 用于跨 agent 委派，Guardrails 并行执行输入与安全校验并快速失败。Sessions 提供的是会话记忆而非可回溯的图执行状态，因此在本项目的多阶段验证循环中控制粒度弱于 LangGraph。",
+      "status": "supported",
+      "priority": 1,
+      "confidence": 0.995,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_976179",
+        "ev_6aa46e42_1ffe68",
+        "ev_6aa471b9_c0a84c"
+      ],
+      "tags": [
+        "tradeoff",
+        "sdk"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c4",
+      "type": "claim",
+      "title": "官方最佳实践：开放/对话式任务用 agent，步骤确定的流程用 workflow，能用普通函数完成的任务不应引入 agent",
+      "body": "微软 Agent Framework 概览给出 agent/workflow 选择判据（task is open-ended or conversational vs process has well-defined steps），并明确 If you can write a function to handle the task, do that instead of using an AI agent。对本项目的直接含义：确定性检索/解析管线不应被 agent 化，agent 只保留在规划与判断节点。",
+      "status": "verified",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_37c989",
+        "ev_6aa46d36_f342b9"
+      ],
+      "tags": [
+        "practice",
+        "scope-control"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c5",
+      "type": "claim",
+      "title": "MCP 只定义工具/资源访问与信任模型，不提供编排循环；自建循环必须自行承担用户同意、权限控制与审计",
+      "body": "MCP 2025-06-18 规范 Trust & Safety：协议通过任意数据访问与代码执行路径带来能力，也随之带来必须由实现者处理的安全与信任问题；关键原则要求用户明确同意并保留对数据共享与操作的控制。因此 MCP-only 方案的隐性工程量是循环控制器、检查点与审计日志。",
+      "status": "verified",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_c0fd19",
+        "ev_6aa46d36_b47b1d",
+        "ev_6aa471b9_3f494d"
+      ],
+      "tags": [
+        "mcp",
+        "security"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c6",
+      "type": "claim",
+      "title": "代码事实：demo-project 的 LLM 路径是阻塞式单发调用，ADR-001 已自述代价为无重试、无流式、无工具、无可观测性",
+      "body": "src/summariser.py 用 urllib 直连 chat/completions，TIMEOUT_SECONDS=30，无异常处理；docs/DECISIONS.md 的 ADR-001（accepted, under review）明确列出上述代价并把『LangGraph 还是 AutoGen，还是继续手写』记为 open question。本 claim 只陈述工作区事实，收益量级见 g-benchmark-missing 与 c7。",
+      "status": "verified",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_41eb66",
+        "ev_6aa46d36_2d2951",
+        "ev_6aa46e42_333fb9",
+        "ev_6aa46e42_d009de",
+        "ev_6aa46e42_d4fba2"
+      ],
+      "tags": [
+        "workspace",
+        "code-grounding"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c7",
+      "type": "claim",
+      "title": "推断：厂商正在把 planner/harness 能力内置（Agent Framework 的 Harness Agent、LangGraph 的部署平台），本 Skill 自研 planner 层存在被官方实现吸收的风险，选型必须保留替换空间",
+      "body": "依据是两处厂商自述的能力清单扩张，属于趋势推断而非既有事实：Agent Framework 概览把 Harness Agent 描述为自带 planning 与 todo 跟踪、上下文压缩、文件访问与记忆、don't-ask-again 工具审批与可观测性的 opinionated agent；LangGraph 概览把 deployment 平台与跨团队 agent 复用列为生态能力。若这些抽象成熟，NexusSearch 的 planner 可能只需保留策略配置而非实现。置信度不足 0.7，标记 uncertain，需要在下一轮研究中找一手反例或采用证据。",
+      "status": "proposed",
+      "priority": 1,
+      "confidence": 0.37,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46e42_267671",
+        "ev_6aa46e42_d5ede6"
+      ],
+      "tags": [
+        "uncertain",
+        "forecast",
+        "needs-counterexample"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:09:49+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c8",
+      "type": "claim",
+      "title": "流式与失败重试在四个方案中的承担者不同：LangGraph 用 durable execution + streaming，Agent Framework 用 graph-based workflow 提供显式执行路径，Agents SDK 用 guardrails 快速失败 + human-in-the-loop，MCP 只定义传输与信任模型、重试属实现者责任",
+      "body": "三个框架各自有一手文本说明其承担方式；MCP 侧的判据来自反向证据：本项目 runtime/mcp_router.py 自行实现 timeout/retry/fallback/audit，说明协议层不提供这些语义，选型比较的是『谁替你实现』而不是『有没有』。",
+      "status": "supported",
+      "priority": 1,
+      "confidence": 1.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa471b9_b91061",
+        "ev_6aa471b9_344a72",
+        "ev_6aa471b9_c0a84c",
+        "ev_6aa471b9_3f494d"
+      ],
+      "tags": [
+        "streaming",
+        "retry",
+        "comparison"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:24:33+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "c9",
+      "type": "claim",
+      "title": "迁移的运维成本增量主要在持久化后端与观测：LangGraph 把调试/观测指向 LangSmith 平台，AutoGen 用 Studio 降低原型成本，而本项目已具备本地 tool-calls 审计与 loop.jsonl，可不自建云端观测",
+      "body": "观测与部署是厂商生态位而非框架内建：LangGraph README 将 Debugging 指向 LangSmith、并引入独立 deployment platform；AutoGen 的 Studio 是无代码原型入口（pip install -U autogenstudio）。本仓库已把 MCP 调用与循环迭代写为 JSONL 审计，因此 q3 的『运维成本』主要落在 checkpointer 后端选型，而不是从零建观测。",
+      "status": "supported",
+      "priority": 1,
+      "confidence": 0.878,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa471b9_fceed9",
+        "ev_6aa471b9_0be8cf"
+      ],
+      "tags": [
+        "cost",
+        "observability",
+        "ops"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:24:33+00:00",
+      "updated_at": "2026-09-11T21:25:23+00:00"
+    },
+    {
+      "id": "con-只能使用本地-mcp-服务获取外部资料-禁止上传",
+      "type": "constraint",
+      "title": "只能使用本地 MCP 服务获取外部资料，禁止上传任何源码或数据。",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "con-结论必须有可追溯来源与置信度-单个来源不得支撑关",
+      "type": "constraint",
+      "title": "结论必须有可追溯来源与置信度，单个来源不得支撑关键结论。",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "con-需给出-6-周内的迁移路线与回滚方案",
+      "type": "constraint",
+      "title": "需给出 6 周内的迁移路线与回滚方案。",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "d1",
+      "type": "decision",
+      "title": "选型：以 LangGraph 图编排为控制面 + 本地 MCP servers 为工具面，AutoGen / Agents SDK / MCP 自建循环均不采用",
+      "body": "在满足 PRP 约束（本地优先、无云依赖、可验证证据链）前提下，LangGraph 提供与需求最匹配的状态持久化与可恢复执行；工具调用继续走本地 MCP 路由器，保留超时/重试/降级/审计。",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_41eb66",
+        "ev_6aa46d36_c0fd19",
+        "ev_6aa46d36_b47b1d",
+        "ev_6aa46e42_e78db7",
+        "ev_6aa46e42_333fb9",
+        "ev_6aa46e42_d009de"
+      ],
+      "decision": {
+        "choice": "LangGraph 图编排（本地 checkpointer）+ 本地 MCP 工具层",
+        "alternatives": [
+          "AutoGen / AG2",
+          "OpenAI Agents SDK",
+          "MCP 自建 while 循环"
+        ],
+        "rationale": "长任务状态图与可恢复执行是硬需求：LangGraph 的 durable execution/checkpointer/interrupt 与 loop_controller 语义一一对应；工具层已由本地 MCP 覆盖，无需换取整套 SDK。",
+        "rejected": [
+          {
+            "option": "AutoGen / AG2",
+            "reason": "官方文档显示其能力正被并入 Microsoft Agent Framework，独立演进前景不明，12 个月内可能二次迁移。"
+          },
+          {
+            "option": "OpenAI Agents SDK",
+            "reason": "sessions 是会话记忆层而非可回溯图执行，且 guardrails 依赖其模型客户端，与本地优先约束冲突。"
+          },
+          {
+            "option": "MCP 自建 while 循环",
+            "reason": "需自行实现同意/权限/审计/检查点，重复造轮子且无社区验证，维护成本高于收益。"
+          }
+        ],
+        "conditions": [
+          "仅在确认需要多阶段可恢复研究循环时引入",
+          "任何外部网络检索必须经 mcp_router 白名单与 tool-calls 日志"
+        ]
+      },
+      "risk_level": "medium",
+      "mitigation": "把框架接口收敛到 runtime/agent_router 之后，保留 6 个月内切换到 Agent Framework 的适配层",
+      "tags": [
+        "decision",
+        "selection"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa4586f_1f15a2",
+      "type": "evidence",
+      "title": "本地工作区 demo-project 共 7 个文件, 79 行代码, 语言分布 7 files | python:4, markdown:2 | manifests: requirements.txt | entrypoints: app.py",
+      "body": "# Ticketd (demo project)\n\nA deliberately small FastAPI service used as input for the NexusSearch demo run.\nIt manages tickets with a Postgres backend and a hand-rolled LLM summariser.\n\n## Layout\n- `src/app.py` — HTTP layer, `/tickets` CRUD plus `/tickets/{id}/summary`\n- `src/summariser.py` — direct OpenAI-shaped HTTP call, no retry, no caching\n- `src/db.py` — sync `psycopg` connection per request\n- `docs/DECISIONS.md` — why the current design was chosen\n\n## Run\n```bash\nuvicorn src.app:app --reload\n```\n\n## Known pain points\n- the summariser blocks a request thread for up to 30 s\n- no streaming, so long tickets time out behind the gateway\n- no tests for the LLM path\n",
+      "priority": 1,
+      "confidence": 0.75,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "ev_6aa4586f_e6d999",
+      "type": "evidence",
+      "title": "依赖与构建清单为 requirements.txt, 决定了可用的本地技术栈",
+      "body": "entrypoints: src/app.py",
+      "priority": 1,
+      "confidence": 0.75,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "ev_6aa4590d_702015",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 mozilla.org: Internationalization",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa4590d_ebffad",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 microsoft.com: Microsoft Power Platform 官方文档 - Power Platform",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45910_e7fc66",
+      "type": "evidence",
+      "title": "microsoft.com 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docume」指出: Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-co",
+      "body": "Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProper",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45911_98de04",
+      "type": "evidence",
+      "title": "mozilla.org 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docume」指出: Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45924_7e6ae3",
+      "type": "evidence",
+      "title": "microsoft.com 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」指出: Dynamics 365和 Power Platform 的发布计划 - Dynamics 365 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers",
+      "body": "Dynamics 365和 Power Platform 的发布计划 - Dynamics 365 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnPro",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45924_bf41a2",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 microsoft.com: Dynamics 365和 Power Platform 的发布计划 - Dynamics 365",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45924_e803ab",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45925_546b53",
+      "type": "evidence",
+      "title": "mozilla.org 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45937_0d9121",
+      "type": "evidence",
+      "title": "检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot)",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45937_6c0465",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: .NET 文档 - .NET",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45937_885387",
+      "type": "evidence",
+      "title": "检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: MDN GitHub repositories",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45937_b34b65",
+      "type": "evidence",
+      "title": "检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: GitHub Discussions",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45937_c37469",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: Specification",
+      "body": "search hit for 现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45938_228924",
+      "type": "evidence",
+      "title": "mozilla.org 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification g」指出: MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localSt",
+      "body": "MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Che",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45938_626548",
+      "type": "evidence",
+      "title": "microsoft.com 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification g」指出: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stor",
+      "body": "GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"docs-layout-persistence\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (va",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa45938_9fb4d6",
+      "type": "evidence",
+      "title": "mozilla.org 就「现状与主流方案是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification g」指出: GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "ev_6aa4594b_55eddd",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 microsoft.com: Microsoft Foundry 文档",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4594b_e4cf94",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 mozilla.org: Internationalization",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4594c_5c9adc",
+      "type": "evidence",
+      "title": "mozilla.org 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docu」指出: Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4594c_fb7f81",
+      "type": "evidence",
+      "title": "microsoft.com 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docu」指出: Microsoft Foundry 文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matche",
+      "body": "Microsoft Foundry 文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProperty.call(blocked, c)) conti",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4595d_36e916",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 microsoft.com: 2026 年 7 月公告 - Partner Center announcements",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4595d_9121f5",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4595e_3e0b8d",
+      "type": "evidence",
+      "title": "mozilla.org 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparis」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4595e_82318f",
+      "type": "evidence",
+      "title": "microsoft.com 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparis」指出: 2026 年 7 月公告 - Partner Center announcements | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color",
+      "body": "2026 年 7 月公告 - Partner Center announcements | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"docs-layout-persistence\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.proto",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_39a842",
+      "type": "evidence",
+      "title": "检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: GitHub Discussions",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_736832",
+      "type": "evidence",
+      "title": "microsoft.com 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification」指出: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stor",
+      "body": "GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"docs-layout-persistence\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (va",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_75593b",
+      "type": "evidence",
+      "title": "检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: MDN GitHub repositories",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_75ef78",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: Specification",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_88bf9d",
+      "type": "evidence",
+      "title": "检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot)",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_c7ffda",
+      "type": "evidence",
+      "title": "mozilla.org 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification」指出: MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localSt",
+      "body": "MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Che",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_e99564",
+      "type": "evidence",
+      "title": "mozilla.org 就「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification」指出: GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa4596f_fb99af",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: .NET 文档 - .NET",
+      "body": "search hit for 各方案的成本与权衡是什么 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "ev_6aa45982_4fb1d3",
+      "type": "evidence",
+      "title": "microsoft.com 就「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation」指出: Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-co",
+      "body": "Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProper",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45982_69d36f",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation」命中来源 microsoft.com: Microsoft Power Platform 官方文档 - Power Platform",
+      "body": "search hit for 架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45982_8bc1a4",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation」命中来源 mozilla.org: Research and learning",
+      "body": "search hit for 架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45983_916e59",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ official documentation」指出: Research and learning - Learn web development | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Research and learning - Learn web development | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45994_0d6deb",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison」命中来源 microsoft.com: Visual Studio 产品系列文档",
+      "body": "search hit for 架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45994_1f98e0",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45995_b8bb58",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45995_bc0c9e",
+      "type": "evidence",
+      "title": "microsoft.com 就「架构与关键机制如何运作 流式输出与失败重试在四个方案中的成熟度如何？ 2026 comparison」指出: Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matche",
+      "body": "Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProperty.call(blocked, c)) conti",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_6c70df",
+      "type": "evidence",
+      "title": "microsoft.com 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docum」指出: Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-co",
+      "body": "Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProper",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_9b2257",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docum」指出: Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_b6186b",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 microsoft.com: Visual Studio 产品系列文档",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_c344c5",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 mozilla.org: Internationalization",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_d5bd87",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 compariso」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_e0c8a9",
+      "type": "evidence",
+      "title": "microsoft.com 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 compariso」指出: Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matche",
+      "body": "Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProperty.call(blocked, c)) conti",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_ea7f4a",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 microsoft.com: Microsoft Power Platform 官方文档 - Power Platform",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a03_f7f513",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_00e349",
+      "type": "evidence",
+      "title": "检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: MDN GitHub repositories",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_086063",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: .NET 文档 - .NET",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_1d6ef6",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_31e690",
+      "type": "evidence",
+      "title": "microsoft.com 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stor",
+      "body": "GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"docs-layout-persistence\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (va",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_87804a",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: Specification",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_8dfa94",
+      "type": "evidence",
+      "title": "检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot)",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_bd3c16",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localSt",
+      "body": "MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Che",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a04_f604ab",
+      "type": "evidence",
+      "title": "检索「有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: GitHub Discussions",
+      "body": "search hit for 有哪些可落地的最佳实践 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "ev_6aa45a05_2cc9a4",
+      "type": "evidence",
+      "title": "microsoft.com 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docum」指出: Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-co",
+      "body": "Microsoft Power Platform 官方文档 - Power Platform | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProper",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a05_acbae9",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official docum」指出: Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "Internationalization - JavaScript | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a05_adebd7",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 mozilla.org: Internationalization",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a05_d3d6fb",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation」命中来源 microsoft.com: Microsoft Power Platform 官方文档 - Power Platform",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a07_068a3a",
+      "type": "evidence",
+      "title": "microsoft.com 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 compariso」指出: Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matche",
+      "body": "Visual Studio 产品系列文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProperty.call(blocked, c)) conti",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a07_220022",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 compariso」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a07_60074f",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 microsoft.com: Visual Studio 产品系列文档",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a07_f2252f",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_03ab2b",
+      "type": "evidence",
+      "title": "检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot)",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_059af7",
+      "type": "evidence",
+      "title": "microsoft.com 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stor",
+      "body": "GitHub Copilot Harness 支持的代理概述 - Microsoft Copilot Studio (GitHub Copilot) | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"docs-layout-persistence\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (va",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_87a8a5",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_8dabd0",
+      "type": "evidence",
+      "title": "检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: MDN GitHub repositories",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_8f97f7",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: Specification",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_952b20",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 microsoft.com: .NET 文档 - .NET",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_aadddf",
+      "type": "evidence",
+      "title": "检索「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github」命中来源 mozilla.org: GitHub Discussions",
+      "body": "search hit for 架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a13_cc6a4d",
+      "type": "evidence",
+      "title": "mozilla.org 就「架构与关键机制如何运作 各框架在\"少量确定性步骤 工具调用\"这类工作流上的抽象差异是什么？ specification 」指出: MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localSt",
+      "body": "MDN GitHub repositories - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Che",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "ev_6aa45a14_53c112",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation」命中来源 mozilla.org: Research and learning",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a14_c3a633",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation」指出: Research and learning - Learn web development | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Research and learning - Learn web development | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a14_d012ae",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation」命中来源 haskell.org: introduce :: Unital cat i1 i0 f => cat i0 (f i1)",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a1c_c54468",
+      "type": "evidence",
+      "title": "haskell.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ official documentation」指出: #synopsis details:not(\\[open\\]) > ul { visibility: hidden; }Data.Functor.MonoidalMathJax.Hub.Config({ tex2jax: { processClass: \"mathjax\", ignoreClass: \".\\*\" } }); monoidal-functors-0.2.3.0: Monoidal Functors Library * [S",
+      "body": "#synopsis details:not(\\[open\\]) > ul { visibility: hidden; }Data.Functor.MonoidalMathJax.Hub.Config({ tex2jax: { processClass: \"mathjax\", ignoreClass: \".\\*\" } }); monoidal-functors-0.2.3.0: Monoidal Functors Library * [Source](src/Data.Functor.Monoidal.html) * [Contents](/package/monoidal-functors-0.2.3.0) * [Index](doc-index.html) Safe Haskell Safe-Inferred Language Haskell2010 Data.Functor.Monoidal Contents * [Semigroupal](#g:1) * [Unital](#g:2) * [Monoidal](#g:3) Synopsis * class ([Associative](Control-Category-Tensor.html#t:Associative \"Control.Category.Tensor\") cat t1, [Associative](Control-Category-Tensor.html#t:Associative \"Control.Category.Tensor\") cat t0) => [Semigroupal](#t:Semigroupal) cat t1 t0 f where * [combine](#v:combine) :: (f x \\`t0\\` f x') \\`cat\\` f (x \\`t1\\` x') * [(|?|)](#v:-124--63--124-) :: [Semigroupal](Data-Functor-Monoidal.html#t:Semigroupal \"Data.Functor.Monoid",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a28_27fc91",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison」命中来源 mozilla.org: Comparison of CSS Selectors and XPath",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a28_70d1bd",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison」命中来源 microsoft.com: Visual Studio 文档",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a29_0003fa",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison」指出: Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (",
+      "body": "Comparison of CSS Selectors and XPath - XPath | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Gui",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a29_cea5c4",
+      "type": "evidence",
+      "title": "microsoft.com 就「有哪些公开的生产事故或反例说明不应引入编排框架？ 2026 comparison」指出: Visual Studio 文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ?",
+      "body": "Visual Studio 文档 | Microsoft Learn (function () { try { var stored = localStorage.getItem('theme'); var theme = /^(light|dark|high-contrast)$/.test(stored) ? stored : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.classList.add('theme-' + theme); } catch (e) {} })();; (function () { try { var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}'); var view = state\\[\"Hub\"\\] || {}; var excludesKey = \"\"; var blocked = {}; if (excludesKey) { var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}'); if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) { var scoped = exclusions\\[excludesKey\\]; if (scoped) { if (typeof scoped === 'object') blocked = scoped; } } } var html = document.documentElement; for (var c in view) { if (Object.prototype.hasOwnProperty.call(blocked, c)) continue;",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a2a_25b95e",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」命中来源 mozilla.org: Specification",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a2a_61af37",
+      "type": "evidence",
+      "title": "[弱相关，标题/摘要未命中查询词] 检索「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」命中来源 gentoo.org: Systemd/systemd-boot",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ specification github",
+      "priority": 1,
+      "confidence": 0.25,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a2a_6465d9",
+      "type": "evidence",
+      "title": "检索「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」命中来源 mozilla.org: GitHub Discussions",
+      "body": "search hit for 有哪些公开的生产事故或反例说明不应引入编排框架？ specification github",
+      "priority": 1,
+      "confidence": 0.4,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a2a_9999ce",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」指出: GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage",
+      "body": "GitHub Discussions - MDN Web Docs | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatshe",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a2b_82d3ef",
+      "type": "evidence",
+      "title": "mozilla.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」指出: Specification - Glossary | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(",
+      "body": "Specification - Glossary | MDN try { document.documentElement.dataset.theme = localStorage.getItem(\"theme\") || \"light dark\"; } catch (error) { console.warn(\"Unable to set theme\", error); } try { if (localStorage.getItem(\"nop\") === \"yes\") { document.documentElement.dataset\\[\"nop\"\\] = \"yes\"; } } catch (error) { console.warn(\"Unable to set nop\", error); } * [Skip to main content](#content) * [Skip to search](#search) [MDN](/en-US/) HTML [HTML: Markup language](/en-US/docs/Web/HTML) HTML reference * [Elements](/en-US/docs/Web/HTML/Reference/Elements) * [Global attributes](/en-US/docs/Web/HTML/Reference/Global_attributes) * [Attributes](/en-US/docs/Web/HTML/Reference/Attributes) * [See all…](/en-US/docs/Web/HTML/Reference \"See all HTML references\") HTML guides * [Responsive images](/en-US/docs/Web/HTML/Guides/Responsive_images) * [HTML cheatsheet](/en-US/docs/Web/HTML/Guides/Cheatsheet) * [Da",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa45a32_39a423",
+      "type": "evidence",
+      "title": "gentoo.org 就「有哪些公开的生产事故或反例说明不应引入编排框架？ specification github」指出: Jump to: [content](#top) [ **Get Gentoo!**](https://get.gentoo.org/) [ gentoo.org sites ](#) * [ gentoo.org](https://www.gentoo.org/ \"Gentoo's main website\") * [ Wiki](https://wiki.gentoo.org/ \"Find and contribute docume",
+      "body": "Jump to: [content](#top) [ **Get Gentoo!**](https://get.gentoo.org/) [ gentoo.org sites ](#) * [ gentoo.org](https://www.gentoo.org/ \"Gentoo's main website\") * [ Wiki](https://wiki.gentoo.org/ \"Find and contribute documentation\") * [ Bugs](https://bugs.gentoo.org/ \"Discover and report issues with Gentoo\") * [ Packages](https://packages.gentoo.org/ \"Find software to install\") * [ Forums](https://forums.gentoo.org/ \"Discuss with the community\") * [ Planet](https://planet.gentoo.org/ \"Find out what's going on in the dev community\") * [ Archives](https://archives.gentoo.org/ \"Read up on past discussions\") * [ Devmanual](https://devmanual.gentoo.org/ \"Read the development guide\") * [ Gitweb](https://gitweb.gentoo.org/ \"Browse our source code in Gitweb\") * [ Infra status](https://infra-status.gentoo.org/ \"Get updates on the services provided by the Gentoo infra team\") [ ![Gentoo Linux Logo](ht",
+      "priority": 1,
+      "confidence": 0.62,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_24881d",
+      "type": "evidence",
+      "title": "AutoGen 官方 stable 文档仍以独立框架发布，分层为 Studio / AgentChat / Core / Extensions，AgentChat 面向对话式单/多 Agent 应用",
+      "body": "AutoGen stable 版把栈拆成 Studio（无代码原型）、AgentChat（对话式单/多 Agent）、Core、Extensions 四层，安装入口为 pip install -U autogenstudio / autogen-agentchat。文档同时保留 0.2 版入口，说明版本线仍在并行维护。",
+      "priority": 1,
+      "confidence": 0.8,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_2d2951",
+      "type": "evidence",
+      "title": "demo-project 的 LLM 调用是阻塞式单发请求：urllib 直连 chat/completions，30 秒超时，无重试、无缓存、无流式",
+      "body": "文件自述为「Blocking single-shot LLM call」；调用点没有异常处理与退避重试，返回体一次性解析，因此长文本会在网关侧超时。这是编排收益判断的代码事实基线。",
+      "priority": 1,
+      "confidence": 0.95,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_37c989",
+      "type": "evidence",
+      "title": "官方给出 agent 与 workflow 的选择判据：开放/对话式任务用 agent，步骤确定的流程用 workflow，且能用函数完成的任务不应使用 agent",
+      "body": "同一页面的选型判据可直接复用于本项目：确定性检索/解析/校验管线保持普通函数与 workflow，只有规划与判断节点交给 agent。页面另有提示 Agent Framework does not automatically load .env files。",
+      "priority": 1,
+      "confidence": 0.88,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_41eb66",
+      "type": "evidence",
+      "title": "LangGraph 自述为面向 long-running、stateful agent 的低层编排框架与运行时，核心能力是 durable execution、streaming、human-in-the-loop 与持久化",
+      "body": "概览页同时指出 LangGraph 不抽象 prompt 与架构，需要自行组合；并把 LangSmith 定位为跨框架的追踪/评估平台（即观测能力不随框架免费获得）。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_976179",
+      "type": "evidence",
+      "title": "OpenAI Agents SDK 的设计原则是原语尽量少，核心能力为 handoffs、guardrails 与 sessions（会话内持久记忆层）",
+      "body": "SDK 以 agents-as-tools / handoffs 做委派，guardrails 做并行校验，sessions 做上下文记忆，并内置 human-in-the-loop 与 tracing；描述里没有出现可回溯的图执行状态或检查点语义。",
+      "priority": 1,
+      "confidence": 0.88,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_b36158",
+      "type": "evidence",
+      "title": "微软官方文档称 Agent Framework 是 Semantic Kernel 与 AutoGen 的直接后继，由同一团队创建，并新增图式工作流",
+      "body": "Agent Framework 概览页（页内标注需授权访问，正文可读）把能力归为 Agents / Harness Agent / Workflows / Integrations 四块，Python 安装为 pip install agent-framework，导入路径为 from agent_framework import Agent。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_b47b1d",
+      "type": "evidence",
+      "title": "本 Skill 的循环控制器已经实现 while-gap 迭代、预算与置信度停止条件，编排框架替换的是这一层而不是证据与图存储",
+      "body": "loop_controller 与 graph_engine/evidence_store 解耦，替换编排底座时只需重接 agent_router 与 dispatch，检查点语义可由 graph + evidence 快照复用，这降低了选型迁移成本。",
+      "priority": 1,
+      "confidence": 0.85,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_c0fd19",
+      "type": "evidence",
+      "title": "MCP 规范把安全与信任列为实现者必须处理的约束：协议带来任意数据访问与代码执行路径，用户必须明确同意并保留控制",
+      "body": "规范只定义客户端/服务器之间的工具、资源与提示访问及信任模型，不涉及多 Agent 循环、检查点或重试编排；因此 MCP-only 方案需要自行实现控制器与审计。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46d36_f342b9",
+      "type": "evidence",
+      "title": "SKILL.md 已把置信度阈值与最大迭代次数固定为 confidence_threshold=0.85 / max_iteration=5，质量门最低分 0.80",
+      "body": "停止条件与循环预算写在 Skill 契约里，运行时读取 config/quality.yaml；报告只有在质量门 PASS 后才视为完成，这是本次 analyst 补齐 claim/risk/decision 的直接原因。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00",
+      "updated_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_1ffe68",
+      "type": "evidence",
+      "title": "PyPI 登记 openai-agents 最新版 0.22.2（仍为 pre-1.0），要求 Python>=3.10，自述为 provider-agnostic 的轻量多 Agent 框架，Sessions 语义是跨轮次的会话历史管理",
+      "body": "包索引数据（/pypi/openai-agents/json）显示版本 0.22.2、requires_python>=3.10。pre-1.0 版本号与「Sessions=会话历史」两点共同支持 c3 的判断：委派与校验齐备，但没有可回溯的图执行状态语义。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_267671",
+      "type": "evidence",
+      "title": "趋势推断依据一：Agent Framework 概览把 Harness Agent 描述为自带 planning 与 todo 跟踪、上下文压缩、文件访问与记忆、don't-ask-again 工具审批与可观测性的 opinionated agent",
+      "body": "原文是关于能力清单的一手描述，但由此推出「自研 planner 层可能被官方实现吸收」属于分析师的趋势判断，故降级为 secondary 且置信度 0.5，只支撑被标记 uncertain 的 c7。",
+      "priority": 1,
+      "confidence": 0.5,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_333fb9",
+      "type": "evidence",
+      "title": "LangGraph 仓库 README 把 durable execution 定义为『穿过失败并保持状态、可从断点精确恢复』，并明确调试与部署需要 LangSmith 这一独立平台",
+      "body": "一手源码仓库文本，安装入口 pip install -U langgraph。同时可见可观测性被划到 LangSmith 生态，说明选 LangGraph 时追踪能力需要额外方案（本地可用 tool-calls.jsonl 审计替代）。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_d009de",
+      "type": "evidence",
+      "title": "工作区 ADR-001 自述：直连模型导致无重试、无流式、无工具、无可观测性，并把 LangGraph/AutoGen/继续手写记为 open question",
+      "body": "研究问题的原始出处：需求方自己把痛点与未决选型写进了 ADR，d1 的答案（LangGraph 图编排 + 本地 MCP，否决 AutoGen 与继续手写）正是对这条 open question 的回覆。",
+      "priority": 1,
+      "confidence": 0.95,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_d4fba2",
+      "type": "evidence",
+      "title": "工作区缺少任何 LLM 路径测试与基准：tests 目录只有一个断言为真的 test_smoke.py，README 亦声明 no tests for the LLM path",
+      "body": "该证据只支撑「无法量化收益」这一缺口，不能支撑任何性能结论；因此 g-benchmark-missing 被登记为阻止成本论证定稿的阻塞项。",
+      "priority": 1,
+      "confidence": 0.6,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_d5ede6",
+      "type": "evidence",
+      "title": "趋势推断依据二：LangGraph 概览把 deployment 平台、跨团队 agent 复用与 LangSmith Studio 可视化原型列为生态能力，厂商能力面持续外扩",
+      "body": "同为厂商自述，用作 c7 的第二领域支撑；结论仍是待验证预测，不作为选型依据。",
+      "priority": 1,
+      "confidence": 0.5,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_e78db7",
+      "type": "evidence",
+      "title": "PyPI 登记 langgraph 1.2.11（276 个发行版本，最近上传 2026-08-11），已是稳定的 1.x 线且保持发布节奏",
+      "body": "与 openai-agents（pre-1.0）相比，LangGraph 的 1.x 版本号与 276 次发行是成熟度的可核对指标，支撑 d1 选择它作为底座。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa46e42_eb6819",
+      "type": "evidence",
+      "title": "发行节奏量化对比：autogen-agentchat 0.7.5 最后一次上传为 2025-09-30（约 11 个月无新版本），而 agent-framework 1.18.0 于 2026-09-10 发布、mcp 2.2.0 于 2026-09-07 发布",
+      "body": "注册表数据独立于厂商叙述文档，给出可核对的时间线：AutoGen 的 Python 发行线在本机可见范围内已约 11 个月未更新，而后继 Agent Framework 与 MCP SDK 均在最近一周内发布。这与厂商「direct successor」的表述互相印证，构成 c1 的第二领域证据。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_0be8cf",
+      "type": "evidence",
+      "title": "LangGraph 的调试与部署能力指向独立生态（LangSmith 可视化与 deployment platform），不随 OSS 框架内建",
+      "body": "同一 README 也说明 LangGraph 本体保持低层；因此选型的观测成本需按『是否需要额外平台』计入。本项目以本地 JSONL 审计（tool-calls.jsonl / loop.jsonl）替代云端观测。",
+      "priority": 1,
+      "confidence": 0.7,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_0d77fc",
+      "type": "evidence",
+      "title": "负结果记录：q4 的事故/反例检索在 5 个 provider 全部执行后返回 0 个可用候选",
+      "body": "审计行本身即证据：负结果是可复查的，因此 g-no-postmortems 写成『未检索到』而不是『不存在』。",
+      "priority": 1,
+      "confidence": 0.6,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_344a72",
+      "type": "evidence",
+      "title": "Microsoft Agent Framework 在合并 AutoGen 与 Semantic Kernel 之外，新增 graph-based workflows 以显式编排多 Agent 执行路径",
+      "body": "q2/q1 的对照点：显式图执行路径被官方作为独立能力提出，与 Agents SDK 的 handoff 式委派形成两种不同抽象。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_34d584",
+      "type": "evidence",
+      "title": "负结果记录二：CJK 查询产生的 34 条检索结果被相关性过滤器判定 unrelated（mdn 17、learn.microsoft.com 15、hackage 1、gentoo 1），说明缺口来自检索可达性而非文献不存在",
+      "body": "与 g-no-postmortems 的缓解措施一致：需要可达的一手事故库或更宽引擎组，而不是把噪声当证据。该记录同时解释了 source_diversity 检查为何要排除被标记的噪声。",
+      "priority": 1,
+      "confidence": 0.6,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_3f494d",
+      "type": "evidence",
+      "title": "本仓库自行实现了超时/重试/降级/审计（runtime/mcp_router.py 的 _attempt_with_policy 与 defaults.retries），反证 MCP 协议层不提供编排重试语义",
+      "body": "若 MCP 已定义重试/降级，这一层不应存在。该记录与 modelcontextprotocol.io 规范文本（只讲传输与信任模型）共同支撑 c8 的第四种方案与 c5。",
+      "priority": 1,
+      "confidence": 0.85,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_b91061",
+      "type": "evidence",
+      "title": "LangGraph 概览把 agent 编排的基础能力明确列为 durable execution、streaming、human-in-the-loop 与持久化",
+      "body": "q2 的直接答案之一：流式与失败恢复在 LangGraph 中是框架内建能力，不需要在应用层重写。",
+      "priority": 1,
+      "confidence": 0.9,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_c0a84c",
+      "type": "evidence",
+      "title": "OpenAI Agents SDK 的失败控制形态是 guardrails 并行校验快速失败 + 内建 human-in-the-loop，文档未提供可恢复执行语义",
+      "body": "对照 LangGraph 的 durable execution：SDK 的能力集中在『校验并快速失败 + 会话记忆』，恢复语义留给使用者，这直接影响 q2 的成熟度比较。",
+      "priority": 1,
+      "confidence": 0.88,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "ev_6aa471b9_fceed9",
+      "type": "evidence",
+      "title": "AutoGen 提供无代码原型入口 Studio（pip install -U autogenstudio; autogenstudio ui --port 8080），把原型成本从代码侧移到工具侧",
+      "body": "q3 成本维度的对照项：AutoGen 在『上手/原型成本』上确实更低，这一优点被记录在册，即使 c1 的谱系风险使其不适合作为长期选型。",
+      "priority": 1,
+      "confidence": 0.85,
+      "weight": 1.0,
+      "iteration": 0,
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "g-benchmark-missing",
+      "type": "gap",
+      "title": "缺口：缺少基准，无法量化编排改造相对一次普通 async 重构的净收益（p95 延迟、运维面、代码增量）",
+      "body": "examples/demo-project/tests 只有一个断言为 True 的 test_smoke.py，README 亦声明『no tests for the LLM path』。因此本轮结论不给出具体的百分比收益；下一步应加一个最小基准（10 条真实工单，测 p50/p95、重试命中率与新增依赖数）后再回填 c6/d1 的成本论证。",
+      "status": "proposed",
+      "priority": 1,
+      "confidence": 0.5,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46e42_d4fba2"
+      ],
+      "risk_level": "medium",
+      "mitigation": "在决策评审前先做最小基准，并把结果作为 d1 的复核条件",
+      "tags": [
+        "needs-benchmark",
+        "uncertain"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:09:49+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "g-no-postmortems",
+      "type": "gap",
+      "title": "负结果：本地可达引擎组内未检索到可信的一手『引入编排框架导致生产事故』复盘",
+      "body": "q4 要求公开事故/反例。本轮在窄引擎组（github / stackoverflow / hackernews / pypi / npm / microsoft learn）与 CJK→ASCII 改写后仍为 0 候选，另有 34 条被判定 unrelated 的记录。结论只能写成证据缺失，不得写成『框架风险已被排除』；替代的一手反证是框架谱系本身（AutoGen 停更 11 个月 + 并入 Agent Framework），已用于 c1/r1。",
+      "status": "proposed",
+      "priority": 1,
+      "confidence": 0.5,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa471b9_0d77fc",
+        "ev_6aa471b9_34d584"
+      ],
+      "risk_level": "medium",
+      "mitigation": "换用可达的一手事故库（内网 postmortem 集合或公司复盘），或在允许更宽引擎的实例上重跑 q4",
+      "tags": [
+        "negative-result",
+        "uncertain",
+        "search-coverage"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:24:33+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "g-rejected-standalone-loop",
+      "type": "gap",
+      "title": "已否决：不引入编排框架、完全自研 MCP while 循环",
+      "body": "否决理由：MCP 规范只定义工具/资源访问与信任模型，检查点、重试、人机协同与审计都得自建；本仓库虽已有 loop_controller，但把它升级为生产级可恢复运行时属于重复造轮子，缺乏社区验证。残留缺口：若 LangGraph 迁移评估显示 checkpointer 后端成为运维负担，此方案需要重新评估。",
+      "status": "refuted",
+      "priority": 1,
+      "confidence": 0.6,
+      "weight": 1.0,
+      "iteration": 0,
+      "risk_level": "low",
+      "tags": [
+        "rejected",
+        "alternative"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:06:26+00:00",
+      "updated_at": "2026-09-11T21:06:26+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_0aa5ed",
+      "type": "gap",
+      "title": "Close evidence gaps for q1-landscape: no evidence yet, need 3 independent domains, have 0,",
+      "body": "Close evidence gaps for q1-landscape: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_2d9d35",
+      "type": "gap",
+      "title": "Close evidence gaps for q4: no evidence yet, need 3 independent domains, have 0, no primar",
+      "body": "Close evidence gaps for q4: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 2,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_4acf2a",
+      "type": "gap",
+      "title": "Close evidence gaps for q1-tradeoff: no evidence yet, need 3 independent domains, have 0,",
+      "body": "Close evidence gaps for q1-tradeoff: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_8c0eea",
+      "type": "gap",
+      "title": "Close evidence gaps for q2-architecture: no evidence yet, need 3 independent domains, have",
+      "body": "Close evidence gaps for q2-architecture: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_b529c0",
+      "type": "gap",
+      "title": "Close evidence gaps for q1-practice: no evidence yet, need 3 independent domains, have 0,",
+      "body": "Close evidence gaps for q1-practice: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "gap-task_6aa458fa_e1794b",
+      "type": "gap",
+      "title": "Close evidence gaps for q1-architecture: no evidence yet, need 3 independent domains, have",
+      "body": "Close evidence gaps for q1-architecture: no evidence yet, need 3 independent domains, have 0, no primary source",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "researcher"
+      ],
+      "created_by": "loop",
+      "created_at": "2026-09-11T19:39:38+00:00",
+      "updated_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "id": "goal",
+      "type": "goal",
+      "title": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型",
+      "body": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "只能使用本地 MCP 服务获取外部资料，禁止上传任何源码或数据。",
+        "结论必须有可追溯来源与置信度，单个来源不得支撑关键结论。",
+        "需给出 6 周内的迁移路线与回滚方案。"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q1",
+      "type": "question",
+      "title": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？",
+      "body": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa4586f_1f15a2",
+        "ev_6aa4586f_e6d999"
+      ],
+      "tags": [
+        "web.discovery",
+        "mcp",
+        "ag2",
+        "autogen"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q2",
+      "type": "question",
+      "title": "流式输出与失败重试在四个方案中的成熟度如何？",
+      "body": "流式输出与失败重试在四个方案中的成熟度如何？",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "mcp",
+        "ag2",
+        "autogen"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q3",
+      "type": "question",
+      "title": "迁移到编排框架后，延迟与运维成本会增加多少？",
+      "body": "迁移到编排框架后，延迟与运维成本会增加多少？",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "web.discovery",
+        "mcp",
+        "ag2",
+        "autogen"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q4",
+      "type": "question",
+      "title": "有哪些公开的生产事故或反例说明不应引入编排框架？",
+      "body": "有哪些公开的生产事故或反例说明不应引入编排框架？",
+      "priority": 2,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa45a14_53c112",
+        "ev_6aa45a14_d012ae",
+        "ev_6aa45a14_c3a633",
+        "ev_6aa45a1c_c54468",
+        "ev_6aa45a28_70d1bd",
+        "ev_6aa45a28_27fc91",
+        "ev_6aa45a29_cea5c4",
+        "ev_6aa45a29_0003fa",
+        "ev_6aa45a2a_6465d9",
+        "ev_6aa45a2a_25b95e",
+        "ev_6aa45a2a_61af37",
+        "ev_6aa45a2a_9999ce",
+        "ev_6aa45a2b_82d3ef",
+        "ev_6aa45a32_39a423"
+      ],
+      "tags": [
+        "web.discovery",
+        "mcp",
+        "ag2",
+        "autogen"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "id": "r1",
+      "type": "risk",
+      "title": "编排框架 API 收敛期风险：AutoGen→Agent Framework 的合并即先例，选型可能在 12 个月内需要二次迁移",
+      "priority": 1,
+      "confidence": 0.85,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_24881d",
+        "ev_6aa46d36_b36158",
+        "ev_6aa46d36_b47b1d",
+        "ev_6aa46e42_1ffe68",
+        "ev_6aa46e42_eb6819"
+      ],
+      "risk_level": "high",
+      "mitigation": "框架接口隔离在 agent_router 之后；锁定 LangGraph 版本并在 CI 跑 loop 契约测试；每季度复查谱系公告",
+      "tags": [
+        "churn"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "id": "r2",
+      "type": "risk",
+      "title": "本地 MCP 工具即任意代码/数据执行路径：越权读取用户文件或外发数据的风险集中在工具层",
+      "priority": 1,
+      "confidence": 0.8,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_c0fd19",
+        "ev_6aa46d36_f342b9",
+        "ev_6aa46e42_333fb9",
+        "ev_6aa471b9_3f494d",
+        "ev_6aa471b9_0d77fc"
+      ],
+      "risk_level": "high",
+      "mitigation": "只读默认 + 工作区路径白名单 + 每次调用写入 tool-calls.jsonl 审计 + 显式确认后才启用写能力 server",
+      "tags": [
+        "security",
+        "mcp"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "r3",
+      "type": "risk",
+      "title": "改造引入持久化后端与新运维面：checkpointer 需要 Redis/Postgres，demo-project 目前是每请求新建同步 psycopg 连接",
+      "priority": 1,
+      "confidence": 0.7,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa46d36_2d2951",
+        "ev_6aa46e42_d009de",
+        "ev_6aa471b9_0be8cf"
+      ],
+      "risk_level": "medium",
+      "mitigation": "先以内存/SQLite checkpointer 试点单个工作流，量测 p95 延迟后再决定是否引入独立后端",
+      "tags": [
+        "ops",
+        "cost"
+      ],
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00",
+      "updated_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "id": "q1-architecture",
+      "type": "topic",
+      "title": "架构与关键机制如何运作",
+      "body": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？ → 架构与关键机制如何运作",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa45a05_adebd7",
+        "ev_6aa45a05_d3d6fb",
+        "ev_6aa45a05_acbae9",
+        "ev_6aa45a05_2cc9a4",
+        "ev_6aa45a07_f2252f",
+        "ev_6aa45a07_60074f",
+        "ev_6aa45a07_220022",
+        "ev_6aa45a07_068a3a",
+        "ev_6aa45a13_03ab2b",
+        "ev_6aa45a13_aadddf",
+        "ev_6aa45a13_8dabd0",
+        "ev_6aa45a13_952b20",
+        "ev_6aa45a13_8f97f7",
+        "ev_6aa45a13_059af7",
+        "ev_6aa45a13_87a8a5",
+        "ev_6aa45a13_cc6a4d"
+      ],
+      "tags": [
+        "architecture",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "id": "q1-landscape",
+      "type": "topic",
+      "title": "现状与主流方案是什么",
+      "body": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？ → 现状与主流方案是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa4590d_ebffad",
+        "ev_6aa4590d_702015",
+        "ev_6aa45910_e7fc66",
+        "ev_6aa45911_98de04",
+        "ev_6aa45924_bf41a2",
+        "ev_6aa45924_e803ab",
+        "ev_6aa45924_7e6ae3",
+        "ev_6aa45925_546b53",
+        "ev_6aa45937_0d9121",
+        "ev_6aa45937_b34b65",
+        "ev_6aa45937_885387",
+        "ev_6aa45937_6c0465",
+        "ev_6aa45937_c37469",
+        "ev_6aa45938_626548",
+        "ev_6aa45938_9fb4d6",
+        "ev_6aa45938_228924"
+      ],
+      "tags": [
+        "landscape",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "id": "q1-practice",
+      "type": "topic",
+      "title": "有哪些可落地的最佳实践",
+      "body": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？ → 有哪些可落地的最佳实践",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa45a03_ea7f4a",
+        "ev_6aa45a03_c344c5",
+        "ev_6aa45a03_6c70df",
+        "ev_6aa45a03_9b2257",
+        "ev_6aa45a03_f7f513",
+        "ev_6aa45a03_b6186b",
+        "ev_6aa45a03_d5bd87",
+        "ev_6aa45a03_e0c8a9",
+        "ev_6aa45a04_8dfa94",
+        "ev_6aa45a04_f604ab",
+        "ev_6aa45a04_00e349",
+        "ev_6aa45a04_87804a",
+        "ev_6aa45a04_086063",
+        "ev_6aa45a04_31e690",
+        "ev_6aa45a04_1d6ef6",
+        "ev_6aa45a04_bd3c16"
+      ],
+      "tags": [
+        "practice",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "id": "q1-tradeoff",
+      "type": "topic",
+      "title": "各方案的成本与权衡是什么",
+      "body": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？ → 各方案的成本与权衡是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa4594b_55eddd",
+        "ev_6aa4594b_e4cf94",
+        "ev_6aa4594c_fb7f81",
+        "ev_6aa4594c_5c9adc",
+        "ev_6aa4595d_36e916",
+        "ev_6aa4595d_9121f5",
+        "ev_6aa4595e_82318f",
+        "ev_6aa4595e_3e0b8d",
+        "ev_6aa4596f_88bf9d",
+        "ev_6aa4596f_39a842",
+        "ev_6aa4596f_75593b",
+        "ev_6aa4596f_fb99af",
+        "ev_6aa4596f_75ef78",
+        "ev_6aa4596f_736832",
+        "ev_6aa4596f_e99564",
+        "ev_6aa4596f_c7ffda"
+      ],
+      "tags": [
+        "tradeoff",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "id": "q2-architecture",
+      "type": "topic",
+      "title": "架构与关键机制如何运作",
+      "body": "流式输出与失败重试在四个方案中的成熟度如何？ → 架构与关键机制如何运作",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "evidence_refs": [
+        "ev_6aa45982_69d36f",
+        "ev_6aa45982_8bc1a4",
+        "ev_6aa45982_4fb1d3",
+        "ev_6aa45983_916e59",
+        "ev_6aa45994_0d6deb",
+        "ev_6aa45994_1f98e0",
+        "ev_6aa45995_bc0c9e",
+        "ev_6aa45995_b8bb58"
+      ],
+      "tags": [
+        "architecture",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "id": "q2-landscape",
+      "type": "topic",
+      "title": "现状与主流方案是什么",
+      "body": "流式输出与失败重试在四个方案中的成熟度如何？ → 现状与主流方案是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "landscape",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q2-practice",
+      "type": "topic",
+      "title": "有哪些可落地的最佳实践",
+      "body": "流式输出与失败重试在四个方案中的成熟度如何？ → 有哪些可落地的最佳实践",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "practice",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q2-tradeoff",
+      "type": "topic",
+      "title": "各方案的成本与权衡是什么",
+      "body": "流式输出与失败重试在四个方案中的成熟度如何？ → 各方案的成本与权衡是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "tradeoff",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q3-architecture",
+      "type": "topic",
+      "title": "架构与关键机制如何运作",
+      "body": "迁移到编排框架后，延迟与运维成本会增加多少？ → 架构与关键机制如何运作",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "architecture",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q3-landscape",
+      "type": "topic",
+      "title": "现状与主流方案是什么",
+      "body": "迁移到编排框架后，延迟与运维成本会增加多少？ → 现状与主流方案是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "landscape",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q3-practice",
+      "type": "topic",
+      "title": "有哪些可落地的最佳实践",
+      "body": "迁移到编排框架后，延迟与运维成本会增加多少？ → 有哪些可落地的最佳实践",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "practice",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q3-tradeoff",
+      "type": "topic",
+      "title": "各方案的成本与权衡是什么",
+      "body": "迁移到编排框架后，延迟与运维成本会增加多少？ → 各方案的成本与权衡是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "tradeoff",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q4-architecture",
+      "type": "topic",
+      "title": "架构与关键机制如何运作",
+      "body": "有哪些公开的生产事故或反例说明不应引入编排框架？ → 架构与关键机制如何运作",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "architecture",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q4-landscape",
+      "type": "topic",
+      "title": "现状与主流方案是什么",
+      "body": "有哪些公开的生产事故或反例说明不应引入编排框架？ → 现状与主流方案是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "landscape",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q4-practice",
+      "type": "topic",
+      "title": "有哪些可落地的最佳实践",
+      "body": "有哪些公开的生产事故或反例说明不应引入编排框架？ → 有哪些可落地的最佳实践",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "practice",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "id": "q4-tradeoff",
+      "type": "topic",
+      "title": "各方案的成本与权衡是什么",
+      "body": "有哪些公开的生产事故或反例说明不应引入编排框架？ → 各方案的成本与权衡是什么",
+      "priority": 1,
+      "confidence": 0.0,
+      "weight": 1.0,
+      "iteration": 0,
+      "tags": [
+        "tradeoff",
+        "mcp",
+        "ag2"
+      ],
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00",
+      "updated_at": "2026-09-11T19:39:26+00:00"
+    }
+  ],
+  "edges": [
+    {
+      "from": "goal",
+      "to": "q1",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "q1-landscape",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "q1-architecture",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "q1-practice",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "q1-tradeoff",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "q2",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q2",
+      "to": "q2-landscape",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q2",
+      "to": "q2-architecture",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q2",
+      "to": "q2-practice",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q2",
+      "to": "q2-tradeoff",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "q3",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "q3-landscape",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "q3-architecture",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "q3-practice",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "q3-tradeoff",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "q4",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q4",
+      "to": "q4-landscape",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q4",
+      "to": "q4-architecture",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q4",
+      "to": "q4-practice",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q4",
+      "to": "q4-tradeoff",
+      "type": "decomposes_into",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "con-只能使用本地-mcp-服务获取外部资料-禁止上传",
+      "type": "relates_to",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "con-结论必须有可追溯来源与置信度-单个来源不得支撑关",
+      "type": "relates_to",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "goal",
+      "to": "con-需给出-6-周内的迁移路线与回滚方案",
+      "type": "relates_to",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "ev_6aa4586f_1f15a2",
+      "to": "q1",
+      "type": "supports",
+      "weight": 0.75,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "ev_6aa4586f_e6d999",
+      "to": "q1",
+      "type": "supports",
+      "weight": 0.75,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:39:26+00:00"
+    },
+    {
+      "from": "q1-landscape",
+      "to": "gap-task_6aa458fa_0aa5ed",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "q1-tradeoff",
+      "to": "gap-task_6aa458fa_4acf2a",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "q2-architecture",
+      "to": "gap-task_6aa458fa_8c0eea",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "q1-practice",
+      "to": "gap-task_6aa458fa_b529c0",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "q1-architecture",
+      "to": "gap-task_6aa458fa_e1794b",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "q4",
+      "to": "gap-task_6aa458fa_2d9d35",
+      "type": "blocks",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T19:39:38+00:00"
+    },
+    {
+      "from": "ev_6aa4590d_ebffad",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa4590d_702015",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45910_e7fc66",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45911_98de04",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45924_bf41a2",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45924_e803ab",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45924_7e6ae3",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45925_546b53",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45937_0d9121",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45937_b34b65",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45937_885387",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45937_6c0465",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45937_c37469",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45938_626548",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45938_9fb4d6",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa45938_228924",
+      "to": "q1-landscape",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:40:40+00:00"
+    },
+    {
+      "from": "ev_6aa4594b_55eddd",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4594b_e4cf94",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4594c_fb7f81",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4594c_5c9adc",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4595d_36e916",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4595d_9121f5",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4595e_82318f",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4595e_3e0b8d",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_88bf9d",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_39a842",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_75593b",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_fb99af",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_75ef78",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_736832",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_e99564",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa4596f_c7ffda",
+      "to": "q1-tradeoff",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:41:35+00:00"
+    },
+    {
+      "from": "ev_6aa45982_69d36f",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45982_8bc1a4",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45982_4fb1d3",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45983_916e59",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45994_0d6deb",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45994_1f98e0",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45995_bc0c9e",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45995_b8bb58",
+      "to": "q2-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:43:51+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_ea7f4a",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_c344c5",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_6c70df",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_9b2257",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_f7f513",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_b6186b",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_d5bd87",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a03_e0c8a9",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_8dfa94",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_f604ab",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_00e349",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_87804a",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_086063",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_31e690",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_1d6ef6",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a04_bd3c16",
+      "to": "q1-practice",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:04+00:00"
+    },
+    {
+      "from": "ev_6aa45a05_adebd7",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a05_d3d6fb",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a05_acbae9",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a05_2cc9a4",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a07_f2252f",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a07_60074f",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a07_220022",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a07_068a3a",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_03ab2b",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_aadddf",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_8dabd0",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_952b20",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_8f97f7",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_059af7",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_87a8a5",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a13_cc6a4d",
+      "to": "q1-architecture",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:19+00:00"
+    },
+    {
+      "from": "ev_6aa45a14_53c112",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a14_d012ae",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a14_c3a633",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a1c_c54468",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a28_70d1bd",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a28_27fc91",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a29_cea5c4",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a29_0003fa",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a2a_6465d9",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.4,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a2a_25b95e",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=primary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a2a_61af37",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.25,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a2a_9999ce",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a2b_82d3ef",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "ev_6aa45a32_39a423",
+      "to": "q4",
+      "type": "supports",
+      "weight": 0.62,
+      "note": "tier=secondary via=searxng",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T19:44:50+00:00"
+    },
+    {
+      "from": "q1-landscape",
+      "to": "c1",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q1-architecture",
+      "to": "c2",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q1-tradeoff",
+      "to": "c3",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q1-practice",
+      "to": "c4",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q2-architecture",
+      "to": "c5",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q3-tradeoff",
+      "to": "c6",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "d1",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "r1",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q2",
+      "to": "r2",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "r3",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "c6",
+      "to": "c4",
+      "type": "relates_to",
+      "weight": 0.5,
+      "note": "同为范围控制证据：先排除不必要的 agent 化",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "d1",
+      "to": "goal",
+      "type": "answers",
+      "weight": 0.9,
+      "note": "决策直接回答目标中的四方案选型",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "r1",
+      "to": "c1",
+      "type": "relates_to",
+      "weight": 0.7,
+      "note": "框架谱系风险来自 c1 的两条并存一手来源",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "r3",
+      "to": "c6",
+      "type": "relates_to",
+      "weight": 0.6,
+      "note": "成本与延迟结论共享同一代码事实",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:05:06+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_24881d",
+      "to": "c1",
+      "type": "supports",
+      "weight": 0.8,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_24881d",
+      "to": "r1",
+      "type": "supports",
+      "weight": 0.8,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_b36158",
+      "to": "c1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_b36158",
+      "to": "r1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_37c989",
+      "to": "c4",
+      "type": "supports",
+      "weight": 0.88,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_41eb66",
+      "to": "c2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_41eb66",
+      "to": "c6",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_41eb66",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_976179",
+      "to": "c3",
+      "type": "supports",
+      "weight": 0.88,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_c0fd19",
+      "to": "c5",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_c0fd19",
+      "to": "r2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_c0fd19",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_2d2951",
+      "to": "c6",
+      "type": "supports",
+      "weight": 0.95,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_2d2951",
+      "to": "r3",
+      "type": "supports",
+      "weight": 0.95,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_b47b1d",
+      "to": "c5",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_b47b1d",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_b47b1d",
+      "to": "r1",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_f342b9",
+      "to": "c4",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "ev_6aa46d36_f342b9",
+      "to": "r2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:05:58+00:00"
+    },
+    {
+      "from": "q1",
+      "to": "g-rejected-standalone-loop",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:06:26+00:00"
+    },
+    {
+      "from": "g-rejected-standalone-loop",
+      "to": "d1",
+      "type": "relates_to",
+      "weight": 0.6,
+      "note": "决策 d1 中被显式否决的第三个备选",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:06:26+00:00"
+    },
+    {
+      "from": "q4-practice",
+      "to": "c7",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:09:49+00:00"
+    },
+    {
+      "from": "c7",
+      "to": "r1",
+      "type": "relates_to",
+      "weight": 0.6,
+      "note": "同一收敛期风险的趋势性证据",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:09:49+00:00"
+    },
+    {
+      "from": "q3",
+      "to": "g-benchmark-missing",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:09:49+00:00"
+    },
+    {
+      "from": "g-benchmark-missing",
+      "to": "d1",
+      "type": "blocks",
+      "weight": 0.5,
+      "note": "决策可执行，但成本论证依赖该基准",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:09:49+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_1ffe68",
+      "to": "c3",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_1ffe68",
+      "to": "r1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_e78db7",
+      "to": "c2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_e78db7",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_eb6819",
+      "to": "c1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_eb6819",
+      "to": "r1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_333fb9",
+      "to": "c2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_333fb9",
+      "to": "c6",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_333fb9",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_333fb9",
+      "to": "r2",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d009de",
+      "to": "c6",
+      "type": "supports",
+      "weight": 0.95,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d009de",
+      "to": "d1",
+      "type": "supports",
+      "weight": 0.95,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d009de",
+      "to": "r3",
+      "type": "supports",
+      "weight": 0.95,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d4fba2",
+      "to": "g-benchmark-missing",
+      "type": "supports",
+      "weight": 0.6,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d4fba2",
+      "to": "c6",
+      "type": "supports",
+      "weight": 0.6,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_267671",
+      "to": "c7",
+      "type": "supports",
+      "weight": 0.5,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "ev_6aa46e42_d5ede6",
+      "to": "c7",
+      "type": "supports",
+      "weight": 0.5,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:10:26+00:00"
+    },
+    {
+      "from": "q2-architecture",
+      "to": "c8",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:24:33+00:00"
+    },
+    {
+      "from": "q3-tradeoff",
+      "to": "c9",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:24:33+00:00"
+    },
+    {
+      "from": "q4-landscape",
+      "to": "g-no-postmortems",
+      "type": "derived_from",
+      "weight": 1.0,
+      "created_by": "planner",
+      "created_at": "2026-09-11T21:24:33+00:00"
+    },
+    {
+      "from": "g-no-postmortems",
+      "to": "c1",
+      "type": "relates_to",
+      "weight": 0.5,
+      "note": "缺反例时改由谱系证据承担风险论证",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:24:33+00:00"
+    },
+    {
+      "from": "c8",
+      "to": "c5",
+      "type": "refines",
+      "weight": 0.6,
+      "note": "同为『MCP 不管编排语义』的两个侧面",
+      "created_by": "analyst",
+      "created_at": "2026-09-11T21:24:33+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_b91061",
+      "to": "c8",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_344a72",
+      "to": "c8",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_344a72",
+      "to": "c1",
+      "type": "supports",
+      "weight": 0.9,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_c0a84c",
+      "to": "c8",
+      "type": "supports",
+      "weight": 0.88,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_c0a84c",
+      "to": "c3",
+      "type": "supports",
+      "weight": 0.88,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_3f494d",
+      "to": "c8",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_3f494d",
+      "to": "c5",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_3f494d",
+      "to": "r2",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_fceed9",
+      "to": "c9",
+      "type": "supports",
+      "weight": 0.85,
+      "note": "tier=primary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_0be8cf",
+      "to": "c9",
+      "type": "supports",
+      "weight": 0.7,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_0be8cf",
+      "to": "r3",
+      "type": "supports",
+      "weight": 0.7,
+      "note": "tier=secondary via=fetch",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_0d77fc",
+      "to": "g-no-postmortems",
+      "type": "supports",
+      "weight": 0.6,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_0d77fc",
+      "to": "r2",
+      "type": "supports",
+      "weight": 0.6,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    },
+    {
+      "from": "ev_6aa471b9_34d584",
+      "to": "g-no-postmortems",
+      "type": "supports",
+      "weight": 0.6,
+      "note": "tier=primary via=filesystem",
+      "created_by": "researcher",
+      "created_at": "2026-09-11T21:25:13+00:00"
+    }
+  ],
+  "stats": {
+    "nodes": 159,
+    "edges": 192,
+    "depth": 6,
+    "by_type": {
+      "claim": 9,
+      "constraint": 3,
+      "decision": 1,
+      "evidence": 113,
+      "gap": 9,
+      "goal": 1,
+      "question": 4,
+      "risk": 3,
+      "topic": 16
+    },
+    "edges_by_type": {
+      "decomposes_into": 20,
+      "relates_to": 9,
+      "supports": 138,
+      "blocks": 7,
+      "derived_from": 16,
+      "answers": 1,
+      "refines": 1
+    }
+  },
+  "provenance": {}
+}

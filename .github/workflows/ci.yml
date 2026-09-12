@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: py${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install optional extras (runtime is stdlib-only)
+        run: python -m pip install --upgrade pip pytest pyyaml jsonschema
+
+      - name: Unit + integration tests
+        run: python -m pytest tests/ -q
+
+      - name: Agent Skills specification conformance
+        run: ./nexus skill-check
+
+      - name: Offline research loop smoke test
+        run: |
+          ./nexus --offline quickstart "调研本地 MCP 深度搜索方案的技术选型"
+          cd runs/*
+          ../../nexus --offline run --iterations 1
+          ../../nexus --offline report
+          test -s output/report.md
+
+      - name: Installer ships only the publishable payload
+        run: |
+          ./nexus install --dest "$RUNNER_TEMP/skills" --dry-run
+          ./nexus install --dest "$RUNNER_TEMP/skills"
+          test -f "$RUNNER_TEMP/skills/nexus-deep-research/SKILL.md"
+          test ! -e "$RUNNER_TEMP/skills/nexus-deep-research/PRP.md"
+
+      - name: Open-source readiness gate (privacy, secrets, governance)
+        if: matrix.python-version == '3.12'
+        run: |
+          ./nexus open-source check
+          ./nexus open-source build
+          test -f dist/nexus-deep-research/SKILL.md
+
+      - name: Upload installable bundle
+        if: matrix.python-version == '3.12' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-deep-research
+          path: dist/*.zip
+          if-no-files-found: error
+
+  scripts:
+    name: bundled scripts stay non-interactive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every script answers --help without a TTY
+        run: |
+          set -e
+          for script in scripts/*.py; do
+            timeout 20 python3 "$script" --help >/dev/null
+          done

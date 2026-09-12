@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexussearch.schema.plan",
+  "title": "Research Plan",
+  "description": "Output of Phase 0 intake: the structured reading of the user request plus the input folder.",
+  "type": "object",
+  "required": [
+    "objective",
+    "questions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 4
+    },
+    "title": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "factual",
+              "comparative",
+              "evaluative",
+              "procedural",
+              "predictive"
+            ]
+          },
+          "key": {
+            "type": "boolean",
+            "description": "Key questions drive the quality gate."
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "search_strategy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "capability_hint": {
+            "type": "string",
+            "description": "Preferred MCP capability for this question."
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "context_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "spec",
+              "docs",
+              "code",
+              "data",
+              "image",
+              "other"
+            ]
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "deliverables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "quick",
+        "standard",
+        "deep"
+      ],
+      "default": "standard"
+    },
+    "language": {
+      "type": "string"
+    },
+    "workspace": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Terms extracted from the objective, reused to build queries."
+    },
+    "spec_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Input files that were read during intake."
+    },
+    "context_summary": {
+      "type": "string",
+      "description": "One-line digest of the workspace scan."
+    },
+    "context": {
+      "type": "object",
+      "description": "Deterministic scan of the project under study (Phase 0 context).",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "file_count": {
+          "type": "integer"
+        },
+        "line_count": {
+          "type": "integer"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "manifests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "skill": {
+      "type": "object",
+      "description": "Which skill version produced this plan.",
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

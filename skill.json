@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "name": "nexus-deep-research",
+  "version": "1.2.1",
+  "license": "MIT",
+  "description": "Graph-driven, evidence-verified multi-agent deep research skill that runs entirely on local MCP servers.",
+  "entrypoint": "SKILL.md",
+  "homepage": "https://github.com/JIULANG9/NexusSearch-Agent-Skill",
+  "keywords": ["deep-research", "knowledge-graph", "multi-agent", "mcp", "local-first", "evidence"],
+  "requires": {
+    "python": ">=3.10",
+    "mcp_servers_recommended": [
+      "filesystem", "codegraph", "context7", "github", "searxng",
+      "fetch", "playwright", "chrome-devtools", "memory", "postgresql", "redis"
+    ],
+    "mcp_servers_minimum": ["filesystem"]
+  },
+  "capabilities": ["web.discovery", "web.read", "docs.library", "code.repository", "code.local_structure", "memory.long_term", "browser.render", "data.structured", "ui.reference"],
+  "components": {
+    "skill": ["SKILL.md"],
+    "agents": ["agents/planner.md", "agents/context-agent.md", "agents/researcher.md", "agents/analyst.md", "agents/critic.md", "agents/verifier.md", "agents/synthesizer.md"],
+    "workflows": ["workflows/graph-planning.md", "workflows/evidence-harvest.md", "workflows/multimodal-retrieval.md", "workflows/verification.md", "workflows/research-loop.md", "workflows/self-evolution.md"],
+    "config": ["config/settings.yaml", "config/mcp-map.yaml", "config/agents.yaml", "config/quality.yaml"],
+    "schemas": ["schemas/plan.schema.json", "schemas/graph.schema.json", "schemas/evidence.schema.json", "schemas/task.schema.json", "schemas/agent-message.schema.json"],
+    "runtime": ["runtime/", "nexus"],
+    "templates": ["templates/input-spec.md", "templates/report.md", "templates/executive-summary.md"]
+  },
+  "integrations": [
+    {
+      "platform": "claude-code",
+      "install": "cp -R . ~/.claude/skills/nexus-deep-research",
+      "invoke": "/nexus-deep-research <research goal>",
+      "notes": "SKILL.md frontmatter carries name + description for progressive disclosure."
+    },
+    {
+      "platform": "codex",
+      "install": "cp -R . ~/.codex/skills/nexus-deep-research",
+      "invoke": "use the deep research skill: <research goal>"
+    },
+    {
+      "platform": "qoder",
+      "install": "cp -R . .agent/skills/nexus-deep-research",
+      "invoke": "/nexus-deep-research <research goal>"
+    },
+    {
+      "platform": "github-copilot",
+      "install": "cat .github/copilot-instructions.md >> <repo>/.github/copilot-instructions.md",
+      "invoke": "@workspace /research <research goal>"
+    }
+  ],
+  "cli": {
+    "bin": "nexus",
+    "entry": "runtime.cli:main",
+    "commands": ["init", "intake", "plan", "status", "graph", "evidence", "tasks", "dispatch", "mcp", "verify", "gate", "run", "loop", "report", "remember", "audit", "doctor"]
+  },
+  "evolution": {
+    "memory_store": "memory/research-patterns.json",
+    "promotion_rule": "pattern.confidence >= 0.75 and uses >= 3",
+    "feedback_commands": ["nexus remember use", "nexus remember promote", "nexus remember sync"]
+  }
+}

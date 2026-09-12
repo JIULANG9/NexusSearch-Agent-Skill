@@ -1,0 +1,422 @@
+version: 1
+id: nexussearch.mcp-map
+description: >
+  Capability map for the local MCP runtime. Maps abstract research
+  capabilities to concrete MCP servers, with ordered fallback chains,
+  timeout/retry policy, and error-class handling. Credentials are NEVER
+  stored here; they are read from the host MCP config or environment.
+
+# ---------------------------------------------------------------------------
+# Defaults applied to every provider unless overridden per server/capability.
+# ---------------------------------------------------------------------------
+defaults:
+  timeout_sec: 30
+  retries: 3
+  backoff_ms: 500
+  backoff_multiplier: 2.0
+  jitter: true
+  cache: true
+  cache_ttl_sec: 900
+  # Failures are recorded and the loop continues with the next provider.
+  on_exhausted: degrade          # degrade | abort | skip
+
+# ---------------------------------------------------------------------------
+# Error taxonomy (PRP section 8). Policy decides the router behaviour.
+# ---------------------------------------------------------------------------
+error_policies:
+  timeout:        { action: retry,   max: 3, then: fallback }
+  rate_limited:   { action: backoff, max: 3, then: fallback }
+  unavailable:    { action: fallback, then: mark_unavailable }
+  permission:     { action: fallback, then: mark_unavailable }
+  not_found:      { action: skip,    record: true }
+  invalid_input:  { action: repair,  max: 1, then: skip }
+  low_quality:    { action: reformulate, max: 2, then: skip }
+  auth_missing:   { action: skip,    record: true, notify_user: true }
+  unknown:        { action: retry,   max: 1, then: fallback }
+
+# ---------------------------------------------------------------------------
+# Local MCP servers. `probe` lets `nexus mcp doctor` verify reachability
+# without performing research work. transport: stdio | http | sse.
+# ---------------------------------------------------------------------------
+servers:
+  searxng:
+    purpose: web discovery and multi-engine metasearch
+    transport: stdio
+    command: npx
+    args: ["-y", "mcp-searxng"]
+    env: { SEARXNG_URL: "http://127.0.0.1:8080" }
+    probe: { kind: http, url: "http://127.0.0.1:8080/config" }
+    tier: 1                      # 1 = required for external discovery
+    private_only: true           # self-hosted; no third-party search API
+    # SearXNG answers a narrow engine group in 1-5s; when it hangs it hangs for
+    # the full fan-out. Fail fast and let the next provider answer instead of
+    # burning 30s x 3 retries on one query angle.
+    timeout_sec: 12
+    retries: 1
+    tools:
+      search: searxng_web_search
+      read: web_url_read
+      suggest: searxng_search_suggestions
+      inspect: searxng_instance_info
+    # Engine pinning. `format=json` always answers, but *which* engines actually
+    # return hits depends on the instance's egress path, not on its enablement
+    # list. Two different failure modes have been measured on this host:
+    #
+    #   1. before 2026-09-12: the container sat on a podman bridge network with no
+    #      proxy, so google / duckduckgo / arxiv / huggingface / stackoverflow all
+    #      answered `unresponsive_engines: 超时` -> 0 hits, and only the Chinese and
+    #      package engines (sogou / 360search / quark / mdn) worked. The router
+    #      classified that as `low_quality` and the run cited two domains.
+    #   2. the fix is *not* `engines:` enablement. It is egress: the instance now
+    #      runs on the host network and declares `outgoing.proxies` -> the local
+    #      HTTP proxy (127.0.0.1:7897). See ~/.config or the SearXNG deploy doc
+    #      section "开通用引擎".
+    #
+    # Consequence to remember: a desktop "system proxy" (GNOME manual mode, no
+    # TUN device) does NOT reach a container. Nothing inside podman reads
+    # gsettings, the shell exports no http_proxy, and 7897 binds loopback only, so
+    # a bridge-networked container cannot route through it at all.
+    #
+    # Re-validate after any proxy/instance change with:
+    #   nexus mcp call web.discovery --args '{"query":"...","engines":"bing,google"}'
+    # and per run override both lists below with NEXUS_SEARXNG_ENGINES="g1|g2|g3".
+    #
+    # `mdn` is deliberately last inside its group: it answers fast but returns
+    # popular web-dev landing pages for non-MDN queries, which the harvest
+    # relevance filter drops.
+    search:
+      # Keep any single call's list short: SearXNG fans out per engine and the
+      # stdio client aborts around 40s, so 11 engines intermittently returns
+      # nothing at all. It also merges whatever answers first, so a fat call is
+      # won by the fastest engine and every record cites one domain.
+      engines: [bing, google, github]
+      # One narrow group per query angle (see runtime/harvest.engine_groups).
+      # Re-measured on this instance (2026-09-12, proxy egress, hits counted on a
+      # niche Chinese video-finetuning query and an English ML query):
+      #   bing 10 / google 4 / github 30 / stackoverflow 10 / pypi+npm+huggingface 3+
+      #   semantic scholar OK / 360search 6 / ecosia 4 / mdn OK, each in 0.5-2.5s
+      # Wide groups are worse than no groups: one slow scraper stalls the whole
+      # request until the stdio client aborts at ~40s.
+      # Engines with strong Chinese index coverage. Harvest puts these first for a
+      # CJK query and last for an ASCII one (runtime/harvest.ordered_groups), because
+      # bing/google answer Chinese queries with generic support pages while
+      # 360search returns on-topic Chinese guides. Measured 2026-09-12:
+      #   "视频微调 数据集 标注 规范" -> 360search: 7 relevant / bing,google: 0 relevant
+      cjk_engines:
+        - "360search"
+        - "ecosia"
+        - "quark"
+      engine_groups:
+        - "bing,google"
+        - "github,stackoverflow"
+        - "pypi,npm,huggingface"
+        - "semantic scholar,wikipedia"
+        - "360search,ecosia"
+      # Known-bad on this host right now, keep OUT of the groups:
+      #   arxiv (超时), yahoo (超时), brave (请求过于频繁), duckduckgo / startpage /
+      #   qwant / sogou / baidu (验证码 — anti-bot triggered by the proxy egress IP,
+      #   which is the one thing the proxy costs you), quark / mojeek (0 hits).
+      # SearXNG splits `num_results` across all requested engines, so it must be
+      # sized against the engine list, not against the desired answer count. The
+      # MCP tool rejects anything above 20 ("Invalid arguments for web search").
+      num_results: 20
+      num_results_docs: 10
+      # `categories` is deliberately NOT defaulted here: see web.discovery below.
+      probe_engines: [bing, google, github, 360search]
+    notes: >
+      Requires the local instance to have working egress for the general engines:
+      `network_mode: host` plus `outgoing.proxies.all://` pointing at the desktop
+      HTTP proxy in core-config/settings.yml. If the proxy port changes (7897 here)
+      settings.yml must be edited and the container recreated, otherwise google
+      silently regresses to 超时 and the run degrades back to one or two domains.
+      Categories available locally include it, science, repos,
+      "scientific publications", images, news, wikimedia. Use `categories`
+      + `engines` for multimodal and scholarly retrieval. `/config` on this
+      build does not advertise `formats`, but `/search?format=json` answers
+      200 — do not treat a JSON 400 as "formats disabled" without re-probing.
+
+  fetch:
+    purpose: deterministic URL to text/markdown/JSON extraction
+    transport: stdio
+    command: npx
+    args: ["-y", "@tokenizin/mcp-npx-fetch"]
+    tier: 1
+    tools:
+      html: fetch_html
+      markdown: fetch_markdown
+      json: fetch_json
+      text: fetch_txt
+    offline_fallback: runtime.mcp_router.local_fetch_adapter
+
+  github:
+    purpose: repository intelligence, README/source/spec retrieval
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env: { GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_PERSONAL_ACCESS_TOKEN}" }
+    tier: 2
+    requires_env: [GITHUB_PERSONAL_ACCESS_TOKEN]
+    tools:
+      search_repos: search_repositories
+      read_file: get_file_contents
+      list_commits: list_commits
+      issues: list_issues
+    notes: Token is resolved from the environment; never written to logs.
+
+  context7:
+    purpose: version-accurate library documentation
+    transport: stdio
+    command: npx
+    args: ["-y", "@upstash/context7-mcp@1.0.31"]
+    tier: 2
+    tools:
+      resolve: resolve_library_id
+      docs: get_library_docs
+
+  codegraph:
+    purpose: code structure, symbol and dependency intelligence
+    transport: stdio
+    command: codegraph
+    args: ["serve", "--mcp", "--path", "{{workspace}}"]
+    tier: 1
+    tools:
+      explore: codegraph_explore
+      search: codegraph_search
+      callers: codegraph_callers
+      callees: codegraph_callees
+      impact: codegraph_impact
+      files: codegraph_files
+      status: codegraph_status
+
+  filesystem:
+    purpose: local workspace discovery and artifact persistence
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "{{home}}"]
+    tier: 1
+    write_enabled: true
+    tools:
+      list: list_directory
+      read: read_text_file
+      write: write_file
+      search: search_files
+      tree: directory_tree
+      info: get_file_info
+
+  memory:
+    purpose: long-term research memory and evolution substrate
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    tier: 2
+    write_enabled: true
+    tools:
+      read: read_graph
+      search: search_nodes
+      open: open_nodes
+      create_entities: create_entities
+      add_observations: add_observations
+      create_relations: create_relations
+      delete: delete_entities
+
+  playwright:
+    purpose: scripted browser automation for JS-heavy sources
+    transport: stdio
+    command: npx
+    args: ["-y", "@playwright/mcp@latest"]
+    tier: 3
+    tools:
+      navigate: browser_navigate
+      snapshot: browser_snapshot
+      evaluate: browser_evaluate
+      screenshot: browser_take_screenshot
+
+  chrome-devtools:
+    purpose: dynamic inspection, network traces, performance evidence
+    transport: stdio
+    command: npx
+    args: ["-y", "chrome-devtools-mcp@latest"]
+    tier: 3
+    tools:
+      navigate: navigate_page
+      snapshot: take_snapshot
+      screenshot: take_screenshot
+      network: list_network_requests
+      eval: evaluate_script
+      trace: performance_start_trace
+
+  postgresql:
+    purpose: structured data evidence for data-driven research
+    # Verdict (2026-09-12, measured): the reachable devdb is a *business* database
+    # (users / bills / course_schedules / wechat_pay_config / withdrawals ...), not a
+    # research corpus. Joining it into every run would (a) burn a 30s stdio timeout
+    # per call, (b) risk leaking PII into a report, and (c) violate AGENTS.md 2.1.
+    # So it stays declared for the `data.structured` capability but OFF by default.
+    # Turn it on for a genuinely data-driven spec with NEXUS_ENABLE_POSTGRES=1 and
+    # point NEXUS_PG_URL at a *research* database (read-only role, table allowlist).
+    opt_in: true
+    enable_env: NEXUS_ENABLE_POSTGRES
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-postgres", "${NEXUS_PG_URL}"]
+    tier: 4
+    requires_env: [NEXUS_PG_URL]
+    read_only: true
+    tools: { query: query }
+
+  redis:
+    purpose: cache and key-value state probing
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-redis"]
+    env: { REDIS_URL: "redis://127.0.0.1:6379" }
+    tier: 4
+    tools: { get: get, list: list }
+
+  antd:
+    purpose: component library API intelligence for frontend research
+    transport: stdio
+    command: antd
+    args: ["mcp"]
+    tier: 4
+    tools:
+      info: antd_info
+      doc: antd_doc
+      demo: antd_demo
+      tokens: antd_token
+
+  classschedule:
+    purpose: domain data service (course schedule)
+    transport: http
+    url: "http://localhost:8000/mcp/"
+    tier: 4
+    enabled: true
+    # Last probe (2026-09-12) failed: connection refused. Kept in the map as
+    # an optional provider so `doctor` can re-probe it, but no capability
+    # chain depends on it.
+    known_state: unavailable
+
+# ---------------------------------------------------------------------------
+# Capability -> ordered provider chain. The router walks the chain left to
+# right and stops at the first provider that returns usable evidence.
+# ---------------------------------------------------------------------------
+capabilities:
+  web.discovery:
+    description: find candidate sources for a research question
+    providers:
+      # 1. caller-chosen engines, else the server-level reachable set.
+      #    num_results is a *total* budget shared by all engines, so it has to be
+      #    well above the engine count or every engine is starved to ~0 hits
+      #    (verified: 8 results across 11 pinned engines = 1 usable hit).
+      # `language` is explicit on purpose: the instance ships `default_lang: zh-CN`,
+      # and a niche English technical query answered under that locale is geo-junk
+      # (YouTube / Korean camping portals). harvest.search_language() overrides this
+      # per query; the template default only applies to direct `nexus mcp call`s.
+      - { server: searxng, tool: search, args: { query: "{{query}}", num_results: "{{num_results|20}}", engines: "{{engines}}", language: "{{language|en-US}}" } }
+      # 2. package-registry / vendor-documentation angle, different engines so the
+      #    second call widens coverage instead of repeating the first.
+      #    NOTE: passing `categories` alongside `engines` makes SearXNG answer for
+      #    the whole category and ignore the engine filter (verified: engines=
+      #    github,stackoverflow,hackernews + categories=it -> 10 mdn / 1 github).
+      #    Callers may still pass `categories` explicitly to widen a search.
+      - { server: searxng, tool: search, args: { query: "{{query}}", num_results: "{{num_results_docs|10}}", engines: "{{engines_docs|pypi,npm,huggingface,microsoft learn}}", language: "{{language|en-US}}" } }
+      # 3. autocomplete-assisted rewrite
+      - { server: searxng, tool: suggest }
+      # 4. repository intelligence (skipped automatically without a token)
+      - { server: github, tool: search_repos, args: { query: "{{query}}", per_page: 8 } }
+      # 5. direct metasearch endpoint: bypasses the MCP wrapper when it misbehaves.
+      #    Keep this host in sync with servers.searxng.env.SEARXNG_URL.
+      - { server: fetch, tool: json, args: { url: "http://127.0.0.1:8080/search?format=json&q={{query}}&engines={{engines}}&language={{language|en-US}}" }, note: "hit a local searxng /search endpoint directly" }
+    # min_results is 1 on purpose: a narrow engine group legitimately returns 2-3
+    # on-topic hits, and an engine that answers with 1 usable source is still worth
+    # more than the chain falling through to unrelated providers.
+    quality: { min_results: 1, require_url: true }
+    low_quality_signals: ["results: 0", "engine error"]
+
+  web.read:
+    description: read one specific URL into citable text
+    providers:
+      - { server: fetch, tool: markdown, args: { url: "{{url}}" } }
+      - { server: searxng, tool: read, args: { url: "{{url}}" } }
+      - { server: playwright, tool: navigate, note: "SPA / JS-rendered pages" }
+      - { server: chrome-devtools, tool: navigate }
+    quality: { min_chars: 400 }
+
+  docs.library:
+    description: authoritative library/framework documentation
+    providers:
+      - { server: context7, tool: resolve }
+      - { server: context7, tool: docs }
+      - { server: fetch, tool: markdown }
+      - { server: searxng, tool: read }
+
+  code.repository:
+    description: read third-party repository source and specs
+    providers:
+      - { server: github, tool: search_repos }
+      - { server: github, tool: read_file }
+      - { server: fetch, tool: markdown, note: "raw.githubusercontent.com" }
+
+  code.local_structure:
+    description: understand the workspace under study
+    providers:
+      - { server: codegraph, tool: explore }
+      - { server: codegraph, tool: files }
+      - { server: filesystem, tool: tree }
+      - { server: filesystem, tool: read }
+    prefer_when: { local_workspace: true }
+
+  memory.long_term:
+    description: recall and persist reusable research patterns
+    providers:
+      - { server: memory, tool: search }
+      - { server: memory, tool: read }
+      - { server: filesystem, tool: read, note: "memory/research-patterns.json" }
+    write_providers:
+      - { server: memory, tool: create_entities }
+      - { server: filesystem, tool: write }
+
+  browser.render:
+    description: capture rendered evidence (screenshots, DOM, network)
+    providers:
+      - { server: chrome-devtools, tool: screenshot }
+      - { server: playwright, tool: screenshot }
+      - { server: fetch, tool: html }
+
+  data.structured:
+    description: query local databases for quantitative evidence
+    providers:
+      - { server: postgresql, tool: query }
+      - { server: redis, tool: get }
+    safety: { read_only: true, forbid: ["DROP", "DELETE", "UPDATE", "INSERT"] }
+
+  domain.business:
+    description: vertical/business data services exposed over MCP
+    providers:
+      - { server: classschedule }
+      - { server: searxng, tool: search, note: "fallback to public sources" }
+
+  multimodal.image:
+    description: image and screenshot evidence for visual comparison
+    providers:
+      - { server: searxng, tool: search, args: { query: "{{query}}", categories: "images", num_results: 8 } }
+      - { server: chrome-devtools, tool: screenshot, note: "render a reference page as image evidence" }
+      - { server: playwright, tool: screenshot }
+      - { server: filesystem, tool: read, note: "input/files/* already in the workspace" }
+    quality: { min_results: 1 }
+
+  ui.component:
+    description: design-system and component API intelligence
+    providers:
+      - { server: antd, tool: info }
+      - { server: context7, tool: docs }
+
+# ---------------------------------------------------------------------------
+# Multimodal retrieval strategy (design doc section 10).
+# ---------------------------------------------------------------------------
+multimodal:
+  text:      { parsers: [markdown, code, html], provider: fetch }
+  documents: { parsers: [pdf, docx, xlsx], provider: filesystem, note: "pdftotext / python-docx when installed" }
+  images:    { provider: searxng, categories: [images], capture: chrome-devtools, model: "vision turn on the agent side" }
+  code:      { provider: codegraph }
+  structured:{ provider: postgresql }

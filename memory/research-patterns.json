@@ -1,0 +1,438 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-09-12T16:46:42+00:00",
+  "count": 29,
+  "patterns": [
+    {
+      "id": "pat_0002",
+      "kind": "failure",
+      "title": "Gate check often fails: source_diversity",
+      "statement": "run the researcher on a new query angle to reach more independent domains",
+      "context": [
+        "quality gate",
+        "source_diversity"
+      ],
+      "confidence": 0.99,
+      "uses": 108,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0003",
+      "kind": "failure",
+      "title": "Gate check often fails: key_claim_corroboration",
+      "statement": "the analyst must promote findings into claim nodes",
+      "context": [
+        "key_claim_corroboration",
+        "quality gate"
+      ],
+      "confidence": 0.99,
+      "uses": 110,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0004",
+      "kind": "failure",
+      "title": "Gate check often fails: risk_analysis",
+      "statement": "the analyst must add risk nodes with evidence and mitigations",
+      "context": [
+        "quality gate",
+        "risk_analysis"
+      ],
+      "confidence": 0.99,
+      "uses": 110,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0005",
+      "kind": "failure",
+      "title": "Gate check often fails: counterexample",
+      "statement": "record at least one rejected alternative with the reason it was rejected",
+      "context": [
+        "counterexample",
+        "quality gate"
+      ],
+      "confidence": 0.99,
+      "uses": 110,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0006",
+      "kind": "failure",
+      "title": "Gate check often fails: uncertainty_marking",
+      "statement": "add claims",
+      "context": [
+        "quality gate",
+        "uncertainty_marking"
+      ],
+      "confidence": 0.99,
+      "uses": 110,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0008",
+      "kind": "query",
+      "title": "查询模板",
+      "statement": "把 official documentation 放句尾",
+      "confidence": 0.99,
+      "uses": 85,
+      "source_run": "run",
+      "created_at": "2026-09-11T19:14:01+00:00",
+      "updated_at": "2026-09-12T16:46:40+00:00"
+    },
+    {
+      "id": "pat_0009",
+      "kind": "decision",
+      "title": "Run run: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 3, \"domains\": 1, \"verified\": 0, \"tiers\": {\"primary\": 3}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.99,
+      "uses": 81,
+      "source_run": "run",
+      "created_at": "2026-09-11T19:15:10+00:00",
+      "updated_at": "2026-09-12T16:46:40+00:00"
+    },
+    {
+      "id": "pat_0029",
+      "kind": "decision",
+      "title": "Run 调研本地深度搜索方案: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 14, \"domains\": 2, \"verified\": 0, \"tiers\": {\"primary\": 1, \"secondary\": 13}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.99,
+      "uses": 13,
+      "source_run": "调研本地深度搜索方案",
+      "created_at": "2026-09-12T06:39:11+00:00",
+      "updated_at": "2026-09-12T16:46:42+00:00"
+    },
+    {
+      "id": "pat_0015",
+      "kind": "query",
+      "title": "CJK 问题必须改写成 ASCII 检索词",
+      "statement": "中文整句直接检索时，本地可达引擎几乎全部命中门户页：ai-agent-framework 一轮里 34/88 条结果被判定 unrelated（mdn 17、learn.microsoft.com 15）。改写成「框架名 + official documentation / migration / comparison」后同一引擎组返回一手文档。规划阶段就为每个 facet 生成 ASCII 查询，而不是翻译后再检索。",
+      "context": [
+        "query planning",
+        "searxng"
+      ],
+      "confidence": 0.9,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0017",
+      "kind": "failure",
+      "title": "categories 与 engines 同时传会忽略引擎过滤",
+      "statement": "engines=github,stackoverflow,hackernews + categories=it 的结果里 mdn 占 10/11：SearXNG 回答了整个类别而丢弃引擎限定。需要限定引擎时不要带 categories。",
+      "context": [
+        "parameters",
+        "searxng"
+      ],
+      "confidence": 0.9,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0020",
+      "kind": "source",
+      "title": "叙事结论必须配一条可核对的注册表事实",
+      "statement": "「AutoGen 正在被并入 Agent Framework」是厂商叙述；autogen-agentchat 0.7.5 最后上传 2025-09-30、agent-framework 1.18.0 上传 2026-09-10 才是可复核的量化交叉验证。pypi / registry 端点常被搜索引擎漏掉，直接 fetch_json 取。",
+      "context": [
+        "cross-check",
+        "pypi"
+      ],
+      "confidence": 0.9,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0027",
+      "kind": "failure",
+      "title": "中文相关性判定要展开 n-gram",
+      "statement": "Greedy 2-6 char CJK tokenisation made every Chinese page score relevance 0, because the query token 数据集 and the title token 微调数据集标注 never intersected. Expanding CJK runs into full form plus 2- and 3-character windows lifted Chinese evidence to weight 1.0 while leaving junk at 0.",
+      "context": [
+        "harvest,relevance,cjk"
+      ],
+      "confidence": 0.9,
+      "created_at": "2026-09-12T04:34:35+00:00",
+      "updated_at": "2026-09-12T04:34:35+00:00",
+      "tags": [
+        "cjk,relevance"
+      ]
+    },
+    {
+      "id": "pat_0016",
+      "kind": "query",
+      "title": "一次查询只给一个窄引擎组",
+      "statement": "SearXNG 按引擎扇出，wide 组会被最慢的 scraper 拖到 stdio 超时（11 引擎 ~40s 后返回 0）。每组 2-3 个引擎、每次换一个角度，比一次查全部引擎拿到的独立域更多。",
+      "context": [
+        "engines",
+        "searxng"
+      ],
+      "confidence": 0.85,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0019",
+      "kind": "tool",
+      "title": "num_results 是跨引擎总预算且必须是 int<=20",
+      "statement": "8 results 分摊到 11 个引擎≈每引擎 0.7 条，等于没查。要么减引擎要么提预算；传字符串会被 MCP schema 拒绝。",
+      "context": [
+        "parameters",
+        "searxng"
+      ],
+      "confidence": 0.85,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0021",
+      "kind": "decomposition",
+      "title": "把「找不到反例」写成 gap，不要写成结论",
+      "statement": "q4（公开事故/反例）在 5 个 provider 全部执行后 0 候选。正确产出是 tags=[negative-result, uncertain] 的 gap 节点并附审计日志证据；写成「风险已排除」就是把证据缺失冒充为证据。",
+      "context": [
+        "gaps",
+        "quality gate"
+      ],
+      "confidence": 0.85,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0022",
+      "kind": "failure",
+      "title": "质量门 PASS 不等于 facet 覆盖完成",
+      "statement": "gate 检查的是证据质量（corroboration/risks/counterexample），facet coverage 由 loop 的 node_coverage(0.7) 驱动。ai-agent-framework 收尾时 gate 0.925 仍有 8/16 facet 为 0 覆盖——小预算 demo 的正常状态，报告必须原样列出残留缺口。",
+      "context": [
+        "loop",
+        "quality gate"
+      ],
+      "confidence": 0.85,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0026",
+      "kind": "tool",
+      "title": "中文检索必须走中文引擎组",
+      "statement": "Chinese research queries return on-topic sources only from CJK-capable SearXNG engines (360search/ecosia/quark); bing,google answer the same query with generic support pages. Harvest now orders engine groups by the query's script, so a Chinese angle opens on the Chinese group and rotates away from any group that yields zero term overlap.",
+      "context": [
+        "web.discovery,searxng,locale"
+      ],
+      "confidence": 0.85,
+      "created_at": "2026-09-12T04:34:35+00:00",
+      "updated_at": "2026-09-12T04:34:35+00:00",
+      "tags": [
+        "searxng,cjk,routing"
+      ]
+    },
+    {
+      "id": "pat_0018",
+      "kind": "tool",
+      "title": "web_url_read 读 JS 文档站优于 fetch_markdown",
+      "statement": "文档站（docs.langchain.com 等）用 fetch_markdown 常返回 JSX/脚本汤；searxng 的 web_url_read 直接给可读正文。plain call 与 section=\"Heading\" 稳定，maxLength+startChar/readHeadings 组合常报 Invalid arguments，需要分片时用 paragraphRange。",
+      "context": [
+        "fetch",
+        "searxng",
+        "web.read"
+      ],
+      "confidence": 0.8,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0023",
+      "kind": "decision",
+      "title": "本地 workspace 文件只算一个 corroborating 来源",
+      "statement": "Evidence.independence_key 把 file/code 来源统一归入 workspace 桶：四个仓库文件仍等于 1 个域，1 文件 + 1 厂商文档才是 2 个域。避免用工作区自述把 claim「交叉验证」成 1.00。",
+      "context": [
+        "evidence",
+        "quality gate"
+      ],
+      "confidence": 0.8,
+      "source_run": "field-notes",
+      "created_at": "2026-09-11T21:27:31+00:00",
+      "updated_at": "2026-09-11T21:27:31+00:00",
+      "tags": [
+        "field-note"
+      ]
+    },
+    {
+      "id": "pat_0010",
+      "kind": "decision",
+      "title": "Run ai-agent-framework: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 101, \"domains\": 4, \"verified\": 0, \"tiers\": {\"primary\": 42, \"secondary\": 59}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.5,
+      "uses": 2,
+      "source_run": "ai-agent-framework",
+      "created_at": "2026-09-11T19:23:01+00:00",
+      "updated_at": "2026-09-11T20:02:19+00:00"
+    },
+    {
+      "id": "pat_0014",
+      "kind": "decision",
+      "title": "Run nx-clean: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 2, \"domains\": 1, \"verified\": 0, \"tiers\": {\"primary\": 2}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.5,
+      "uses": 2,
+      "source_run": "nx-clean",
+      "created_at": "2026-09-11T20:04:12+00:00",
+      "updated_at": "2026-09-11T20:33:16+00:00"
+    },
+    {
+      "id": "pat_0024",
+      "kind": "decision",
+      "title": "Run ltx-dataset-annotation: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 28, \"domains\": 7, \"verified\": 0, \"tiers\": {\"primary\": 6, \"secondary\": 22}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.45,
+      "uses": 1,
+      "source_run": "ltx-dataset-annotation",
+      "created_at": "2026-09-12T03:32:44+00:00",
+      "updated_at": "2026-09-12T03:43:48+00:00"
+    },
+    {
+      "id": "pat_0001",
+      "kind": "decision",
+      "title": "Run nx-1452215: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 3, \"domains\": 1, \"verified\": 0, \"tiers\": {\"primary\": 3}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "nx-1452215",
+      "created_at": "2026-09-11T18:20:10+00:00",
+      "updated_at": "2026-09-11T18:20:10+00:00"
+    },
+    {
+      "id": "pat_0007",
+      "kind": "decision",
+      "title": "Run .scratch: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 2, \"domains\": 1, \"verified\": 0, \"tiers\": {\"primary\": 2}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": ".scratch",
+      "created_at": "2026-09-11T18:31:54+00:00",
+      "updated_at": "2026-09-11T18:31:54+00:00"
+    },
+    {
+      "id": "pat_0011",
+      "kind": "decision",
+      "title": "Run nx-demo3: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 88, \"domains\": 5, \"verified\": 0, \"tiers\": {\"primary\": 52, \"secondary\": 36}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "nx-demo3",
+      "created_at": "2026-09-11T19:44:51+00:00",
+      "updated_at": "2026-09-11T19:44:51+00:00"
+    },
+    {
+      "id": "pat_0012",
+      "kind": "decision",
+      "title": "Run nx-demo4: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 86, \"domains\": 4, \"verified\": 0, \"tiers\": {\"primary\": 42, \"secondary\": 44}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "nx-demo4",
+      "created_at": "2026-09-11T19:51:34+00:00",
+      "updated_at": "2026-09-11T19:51:34+00:00"
+    },
+    {
+      "id": "pat_0013",
+      "kind": "decision",
+      "title": "Run nx-final: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 14, \"domains\": 2, \"verified\": 0, \"tiers\": {\"primary\": 2, \"secondary\": 12}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "nx-final",
+      "created_at": "2026-09-11T20:00:47+00:00",
+      "updated_at": "2026-09-11T20:00:47+00:00"
+    },
+    {
+      "id": "pat_0025",
+      "kind": "decision",
+      "title": "Run nexus-zh-2: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 20, \"domains\": 7, \"verified\": 0, \"tiers\": {\"primary\": 4, \"secondary\": 16}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "nexus-zh-2",
+      "created_at": "2026-09-12T04:31:23+00:00",
+      "updated_at": "2026-09-12T04:31:23+00:00"
+    },
+    {
+      "id": "pat_0028",
+      "kind": "decision",
+      "title": "Run 调研本地-mcp-深度搜索方案的技术选型: gate failed",
+      "statement": "Evidence shape at gate time: {\"total\": 2, \"domains\": 2, \"verified\": 0, \"tiers\": {\"primary\": 1, \"secondary\": 1}}",
+      "context": [
+        "quality gate"
+      ],
+      "confidence": 0.4,
+      "source_run": "调研本地-mcp-深度搜索方案的技术选型",
+      "created_at": "2026-09-12T06:21:08+00:00",
+      "updated_at": "2026-09-12T06:21:08+00:00"
+    }
+  ]
+}

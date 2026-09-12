@@ -1,0 +1,26 @@
+NexusSearch-Agent-Skill
+Copyright (c) 2026 NexusSearch contributors
+
+Attribution and inspiration
+---------------------------
+
+The skill-packaging format follows the open Agent Skills specification:
+
+- Agent Skills specification - https://agentskills.io/specification.md
+- Reference validator `skills-ref` - https://github.com/agentskills/agentskills
+- Example skill repository - https://github.com/anthropics/skills
+
+Two community skill repositories were read as structural examples during design
+(layout of SKILL.md plus supporting agents/ references/ scripts/ folders, and the
+Chinese-language skill development guide). They are references only; no source code,
+text or assets are copied from them:
+
+- https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+- https://github.com/sanshao85/claude-skills-guide
+
+MCP server definitions are consumed through the local MCP client configuration of the
+host agent (Claude Code, Codex, Qoder, GitHub Copilot). This project does not bundle
+or redistribute any MCP server implementation.
+
+No third-party code is vendored in this repository. The runtime uses only the Python
+standard library; PyYAML and jsonschema are optional extras.

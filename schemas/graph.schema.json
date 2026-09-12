@@ -1,0 +1,362 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexussearch.schema.graph",
+  "title": "Research Knowledge Graph",
+  "description": "The durable state of a research run: goal, questions, topics, entities, evidence, claims, risks and decisions, plus the typed relations between them.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "goal",
+    "nodes",
+    "edges"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "graph_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "goal": {
+      "$ref": "#/$defs/goalNode"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "stats": {
+      "type": "object",
+      "description": "Derived counters for a run: scalar totals plus per-type breakdowns.",
+      "properties": {
+        "nodes": {
+          "type": "number"
+        },
+        "edges": {
+          "type": "number"
+        },
+        "depth": {
+          "type": "number"
+        },
+        "by_type": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "edges_by_type": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "planner": {
+          "type": "string"
+        },
+        "iterations": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nodeType": {
+      "type": "string",
+      "enum": [
+        "goal",
+        "question",
+        "topic",
+        "entity",
+        "evidence",
+        "claim",
+        "risk",
+        "decision",
+        "constraint",
+        "gap"
+      ]
+    },
+    "claimStatus": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "supported",
+        "contested",
+        "verified",
+        "refuted"
+      ]
+    },
+    "goalNode": {
+      "type": "object",
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/nodeType"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/claimStatus"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "entity_type": {
+          "type": "string",
+          "enum": [
+            "technology",
+            "framework",
+            "library",
+            "protocol",
+            "product",
+            "person",
+            "organisation",
+            "dataset",
+            "standard",
+            "concept",
+            "other"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Evidence ids backing a claim node."
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "mitigation": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "object",
+          "properties": {
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "chosen": {
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "pros": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "alternatives": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "claim"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "status",
+              "evidence_refs"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "decision"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "decision"
+            ]
+          }
+        }
+      ]
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "decomposes_into",
+            "depends_on",
+            "supports",
+            "contradicts",
+            "derived_from",
+            "implements",
+            "relates_to",
+            "answers",
+            "references",
+            "blocks",
+            "mitigates",
+            "refines"
+          ]
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "note": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

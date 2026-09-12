@@ -1,0 +1,107 @@
+version: 1
+id: nexussearch.quality
+description: >
+  Quality gate definitions. The gate is the contract between "an answer"
+  and "a researched answer"; `nexus gate` computes it deterministically
+  from the graph and the evidence store, never from model self-report.
+
+gate:
+  # Overall pass rule: every enabled check must pass.
+  require_all: true
+  # Score needed on top of hard checks.
+  min_quality_score: 0.8
+  # Confidence needed on key claims (PRP section 6).
+  confidence_threshold: 0.85
+
+checks:
+  source_diversity:
+    enabled: true
+    min_sources: 5
+    min_independent_domains: 3
+    description: at least 5 sources from 3 different domains
+
+  key_claim_corroboration:
+    enabled: true
+    min_sources_per_claim: 2
+    key_claim_weight: 0.6
+    description: every key claim needs >=2 independent sources
+
+  contradiction_review:
+    enabled: true
+    require_resolved: true
+    description: contradictions must be resolved or explicitly reported
+
+  risk_analysis:
+    enabled: true
+    min_risks: 2
+    description: report must contain a risk section with >=2 entries
+
+  counterexample:
+    enabled: true
+    require: true
+    description: at least one counter-evidence / failed alternative is documented
+
+  uncertainty_marking:
+    enabled: true
+    require: true
+    max_unmarked_low_confidence: 0
+    threshold: 0.7
+    description: every claim below 0.7 confidence must be labelled as uncertain
+
+  code_grounding:
+    enabled: true
+    required_when: [implementation_plan, architecture_analysis]
+    description: recommendations touching the workspace must cite local files
+
+  primary_source_bias:
+    enabled: true
+    max_secondary_only_ratio: 0.4
+    tier_weights: { primary: 1.0, secondary: 0.7, tertiary: 0.4 }
+    description: >
+      Key claims must not rest only on secondary/tertiary sources
+      (blogs aggregating a spec count as secondary).
+
+# Reliability prior applied to each source type before corroboration.
+source_tiers:
+  primary:
+    weight: 1.0
+    patterns:
+      - "*/official docs*"
+      - "github.com/*/blob/*"
+      - "arxiv.org/*"
+      - "*/api reference*"
+      - "gitlab.com/*"
+      - "*.readthedocs.io/*"
+      - "docs.*"
+      - "developer.mozilla.org/*"
+  secondary:
+    weight: 0.7
+    patterns:
+      - "stackoverflow.com/*"
+      - "*.medium.com/*"
+      - "dev.to/*"
+      - "*/blog/*"
+      - "news.ycombinator.com/*"
+      - "zhihu.com/*"
+      - "juejin.cn/*"
+  tertiary:
+    weight: 0.4
+    patterns:
+      - "aggregator"
+      - "ai summary"
+      - "content farm"
+      - "seo"
+
+# Scoring weights used to derive quality_score from the checks above.
+scoring:
+  evidence_coverage: 0.35
+  source_reliability: 0.20
+  corroboration: 0.20
+  contradiction_control: 0.15
+  uncertainty_transparency: 0.10
+
+penalties:
+  fabricated_source: 1.0        # hard fail; claim is discarded
+  stale_evidence_days: 365      # evidence older than this loses 0.1
+  single_domain_key_claims: 0.25
+  unverified_high_claim: 0.2

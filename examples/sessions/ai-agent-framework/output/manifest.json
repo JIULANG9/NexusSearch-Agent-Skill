@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-09-11T21:41:18+00:00",
+  "skill": {
+    "name": "nexus-deep-research",
+    "display_name": "NexusSearch Deep Research",
+    "version": "1.0.0",
+    "license": "MIT"
+  },
+  "artifacts": [
+    "output/report.md"
+  ],
+  "graph_id": "graph_6aa458ee_8d879f",
+  "nodes": 159,
+  "edges": 192,
+  "evidence": 113,
+  "domains": [
+    "docs.langchain.com",
+    "gentoo.org",
+    "haskell.org",
+    "learn.microsoft.com",
+    "microsoft.com",
+    "microsoft.github.io",
+    "modelcontextprotocol.io",
+    "mozilla.org",
+    "openai.github.io",
+    "pypi.org",
+    "raw.githubusercontent.com",
+    "workspace"
+  ],
+  "confidence": 0.916,
+  "gate_passed": null
+}

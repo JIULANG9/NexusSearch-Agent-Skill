@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexussearch.schema.evidence",
+  "title": "Evidence Record",
+  "description": "One citable unit of research evidence. Every claim in the final report must resolve to at least one of these.",
+  "type": "object",
+  "required": ["id", "claim", "source", "retrieved_at", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "claim": { "type": "string", "minLength": 8, "description": "The specific statement this evidence supports." },
+    "summary": { "type": "string" },
+    "quote": { "type": "string", "maxLength": 1200 },
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["url", "repository", "file", "paper", "docs", "dataset", "database", "code", "screenshot", "api", "transcript", "interview"] },
+        "uri": { "type": "string" },
+        "domain": { "type": "string" },
+        "title": { "type": "string" },
+        "publisher": { "type": "string" },
+        "authors": { "type": "array", "items": { "type": "string" } },
+        "published_at": { "type": "string" },
+        "version": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "path": { "type": "string" }
+      }
+    },
+    "retrieved_via": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "server": { "type": "string" },
+        "tool": { "type": "string" },
+        "capability": { "type": "string" },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "retries": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "retrieved_at": { "type": "string" },
+    "modality": { "type": "string", "enum": ["text", "code", "image", "tabular", "structured", "audio", "video"] },
+    "source_tier": { "type": "string", "enum": ["primary", "secondary", "tertiary"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "confidence_basis": { "type": "string" },
+    "supports": { "type": "array", "items": { "type": "string" } },
+    "contradicts": { "type": "array", "items": { "type": "string" } },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "enum": ["unverified", "checked", "confirmed", "rejected"] },
+        "method": { "type": "string", "enum": ["cross_source", "primary_source", "reproduction", "code_inspection", "official_docs", "manual"] },
+        "verified_by": { "type": "string" },
+        "verified_at": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["stale", "seo_farm", "ai_generated", "single_source", "paywalled", "marketing", "outdated_version", "unrelated", "fabricated", "truncated", "unlinked"] }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

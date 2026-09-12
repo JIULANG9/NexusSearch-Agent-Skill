@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexussearch.schema.agent-message",
+  "title": "Agent Message",
+  "description": "The only permitted communication format between agents. Wraps GraphUpdate, Evidence, Challenge and Verification payloads.",
+  "type": "object",
+  "required": ["from", "to", "kind", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "kind": { "type": "string", "enum": ["graph_update", "evidence_batch", "claim_set", "challenge", "verification", "gap_report", "plan", "report", "control"] },
+    "iteration": { "type": "integer", "minimum": 0 },
+    "task_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "add_nodes": { "type": "array", "items": { "type": "object" } },
+        "add_edges": { "type": "array", "items": { "type": "object" } },
+        "remove_ids": { "type": "array", "items": { "type": "string" } },
+        "evidence": { "type": "array", "items": { "type": "object" } },
+        "claims": { "type": "array", "items": { "type": "object" } },
+        "challenges": { "type": "array", "items": { "type": "object" } },
+        "gaps": { "type": "array", "items": { "type": "object" } },
+        "summary": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

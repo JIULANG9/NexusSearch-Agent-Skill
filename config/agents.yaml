@@ -1,0 +1,96 @@
+version: 1
+id: nexussearch.agents
+description: >
+  Agent roster. Each entry binds a specialized reasoning role to the
+  capabilities it may call, its I/O contract, and its hard budgets.
+  The runtime enforces these grants; the SKILL.md workflow follows them.
+
+# Shared limits applied to every agent unless overridden.
+defaults:
+  max_output_items: 12
+  requires_evidence_for_claims: true
+  log_dir: agents/logs
+
+agents:
+  planner:
+    file: agents/planner.md
+    role: decompose the objective into a Research Graph and a task set
+    phase: intake
+    capabilities: [memory.long_term, code.local_structure]
+    emits: [ResearchPlan, GraphUpdate, ResearchTask]
+    may_write: [graph/, state.json]
+    budgets: { max_questions: 12, max_topics_per_question: 6 }
+
+  context-agent:
+    file: agents/context-agent.md
+    role: build the project/context graph from the local workspace
+    phase: context
+    capabilities: [code.local_structure, memory.long_term, data.structured]
+    emits: [Evidence, GraphUpdate]
+    read_only_workspace: true
+    forbidden: [source modification, external publication of private code]
+    also_known_as: [context.md, context_agent]
+
+  researcher:
+    file: agents/researcher.md
+    role: external knowledge acquisition and evidence harvesting
+    phase: gather
+    capabilities: [web.discovery, web.read, docs.library, code.repository, browser.render, multimodal.image]
+    emits: [Evidence]
+    budgets: { max_sources_per_task: 8, min_independent_domains: 3 }
+    rules: [never fabricate sources, keep contradicting evidence, record retrieval date]
+
+  analyst:
+    file: agents/analyst.md
+    role: compare options, reason about architecture, surface tradeoffs and risks
+    phase: analyze
+    capabilities: [code.local_structure, web.read, memory.long_term]
+    emits: [Claim, Risk, Decision, GraphUpdate]
+    requires: [pros, cons, alternatives, recommendation]
+    also_known_as: [architect.md]
+
+  critic:
+    file: agents/critic.md
+    role: adversarial review of claims before verification (agent debate)
+    phase: challenge
+    capabilities: [web.discovery, web.read, code.local_structure]
+    emits: [Challenge, GraphUpdate]
+    activates_when: { high_stakes: true, contradiction_found: true }
+    budget: { max_challenges_per_claim: 3 }
+
+  verifier:
+    file: agents/verifier.md
+    role: confirm authenticity, cross-check sources, score confidence
+    phase: verify
+    capabilities: [web.discovery, web.read, docs.library, code.local_structure, browser.render]
+    emits: [Verification]
+    gates:
+      min_sources_per_key_claim: 2
+      independent_domains_required: true
+      contradiction_scan: true
+    # The verifier is the only agent allowed to raise a claim's status to
+    # "verified"; it can never lower evidence quality.
+    authority: [claim_status]
+
+  synthesizer:
+    file: agents/synthesizer.md
+    role: write the final report from verified claims only
+    phase: synthesize
+    capabilities: [memory.long_term]
+    emits: [Report]
+    template: templates/report.md
+    may_write: [output/]
+    forbidden: [claims without evidence ids]
+    also_known_as: [writer.md]
+
+# Dispatch order inside one loop iteration.
+pipeline: [planner, context-agent, researcher, analyst, critic, verifier, synthesizer]
+
+# Which agent owns which loop stage (see workflows/research-loop.md).
+stage_owners:
+  analyze_gap: planner
+  generate_tasks: planner
+  dispatch: runtime
+  collect_results: runtime
+  update_graph: runtime
+  verify_claims: verifier

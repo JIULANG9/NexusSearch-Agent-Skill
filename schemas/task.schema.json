@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexussearch.schema.task",
+  "title": "Research Task",
+  "description": "A unit of work created by the planner and consumed by one agent.",
+  "type": "object",
+  "required": ["id", "agent", "objective", "capability"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "agent": { "type": "string" },
+    "objective": { "type": "string", "minLength": 4 },
+    "capability": { "type": "string" },
+    "question_ref": { "type": "string" },
+    "iteration": { "type": "integer", "minimum": 0 },
+    "priority": { "type": "integer", "minimum": 0, "maximum": 3, "default": 1 },
+    "status": { "type": "string", "enum": ["pending", "ready", "running", "done", "failed", "skipped", "blocked"], "default": "pending" },
+    "depends_on": { "type": "array", "items": { "type": "string" } },
+    "params": { "type": "object", "additionalProperties": true },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_evidence": { "type": "integer", "minimum": 0 },
+        "require_primary_source": { "type": "boolean" },
+        "must_answer": { "type": "string" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_tool_calls": { "type": "integer", "minimum": 1 },
+        "timeout_sec": { "type": "number", "minimum": 1 }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": { "type": "array", "items": { "type": "string" } },
+        "graph_updates": { "type": "array", "items": { "type": "object" } },
+        "summary": { "type": "string" },
+        "error": { "type": "string" },
+        "completed_at": { "type": "string" }
+      }
+    },
+    "created_by": { "type": "string" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  }
+}

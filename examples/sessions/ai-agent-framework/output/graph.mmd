@@ -1,0 +1,129 @@
+flowchart TD
+  goal("评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造")
+  q1[["各框架在'少量确定性步骤 + 工具调用'这类工作流上的抽象差异是什么？"]]
+  q2[["流式输出与失败重试在四个方案中的成熟度如何？"]]
+  q3[["迁移到编排框架后，延迟与运维成本会增加多少？"]]
+  q4[["有哪些公开的生产事故或反例说明不应引入编排框架？"]]
+  q1-architecture["架构与关键机制如何运作"]
+  q1-landscape["现状与主流方案是什么"]
+  q1-practice["有哪些可落地的最佳实践"]
+  q1-tradeoff["各方案的成本与权衡是什么"]
+  q2-architecture["架构与关键机制如何运作"]
+  q2-landscape["现状与主流方案是什么"]
+  q2-practice["有哪些可落地的最佳实践"]
+  q2-tradeoff["各方案的成本与权衡是什么"]
+  q3-architecture["架构与关键机制如何运作"]
+  q3-landscape["现状与主流方案是什么"]
+  q3-practice["有哪些可落地的最佳实践"]
+  q3-tradeoff["各方案的成本与权衡是什么"]
+  q4-architecture["架构与关键机制如何运作"]
+  q4-landscape["现状与主流方案是什么"]
+  q4-practice["有哪些可落地的最佳实践"]
+  q4-tradeoff["各方案的成本与权衡是什么"]
+  c1[/"AutoGen 不再适合作为新建项目的长期独立选型：微软官方称 Agent Framew"/]
+  c2[/"LangGraph 的定位是低层编排运行时，核心价值是 durable executio"/]
+  c3[/"OpenAI Agents SDK 以少量原语（handoffs / guardrail"/]
+  c4[/"官方最佳实践：开放/对话式任务用 agent，步骤确定的流程用 workflow，能用普"/]
+  c5[/"MCP 只定义工具/资源访问与信任模型，不提供编排循环；自建循环必须自行承担用户同意、权"/]
+  c6[/"代码事实：demo-project 的 LLM 路径是阻塞式单发调用，ADR-001 已"/]
+  c7[/"推断：厂商正在把 planner/harness 能力内置（Agent Framewor"/]
+  c8[/"流式与失败重试在四个方案中的承担者不同：LangGraph 用 durable exec"/]
+  c9[/"迁移的运维成本增量主要在持久化后端与观测：LangGraph 把调试/观测指向 Lang"/]
+  d1(("选型：以 LangGraph 图编排为控制面 + 本地 MCP servers 为工具面"))
+  r1>"编排框架 API 收敛期风险：AutoGen→Agent Framework 的合并即先"]
+  r2>"本地 MCP 工具即任意代码/数据执行路径：越权读取用户文件或外发数据的风险集中在工具层"]
+  r3>"改造引入持久化后端与新运维面：checkpointer 需要 Redis/Postgre"]
+  con-只能使用本地-mcp-服务获取外部资料-禁止上传[/"只能使用本地 MCP 服务获取外部资料，禁止上传任何源码或数据。"\]
+  con-结论必须有可追溯来源与置信度-单个来源不得支撑关[/"结论必须有可追溯来源与置信度，单个来源不得支撑关键结论。"\]
+  con-需给出-6-周内的迁移路线与回滚方案[/"需给出 6 周内的迁移路线与回滚方案。"\]
+  g-benchmark-missing(("缺口：缺少基准，无法量化编排改造相对一次普通 async 重构的净收益（p95 延迟、运"))
+  g-no-postmortems(("负结果：本地可达引擎组内未检索到可信的一手『引入编排框架导致生产事故』复盘"))
+  g-rejected-standalone-loop(("已否决：不引入编排框架、完全自研 MCP while 循环"))
+  gap-task_6aa458fa_0aa5ed(("Close evidence gaps for q1-landscape: no evi"))
+  gap-task_6aa458fa_2d9d35(("Close evidence gaps for q4: no evidence yet,"))
+  gap-task_6aa458fa_4acf2a(("Close evidence gaps for q1-tradeoff: no evid"))
+  gap-task_6aa458fa_8c0eea(("Close evidence gaps for q2-architecture: no "))
+  gap-task_6aa458fa_b529c0(("Close evidence gaps for q1-practice: no evid"))
+  gap-task_6aa458fa_e1794b(("Close evidence gaps for q1-architecture: no "))
+  ev_6aa4586f_1f15a2(["本地工作区 demo-project 共 7 个文件, 79 行代码, 语言分布 7 f"])
+  ev_6aa4586f_e6d999(["依赖与构建清单为 requirements.txt, 决定了可用的本地技术栈"])
+  ev_6aa4590d_702015(["(弱相关，标题/摘要未命中查询词) 检索「现状与主流方案是什么 各框架在'少量确定性步骤"])
+  ev_6aa4590d_ebffad(["(弱相关，标题/摘要未命中查询词) 检索「现状与主流方案是什么 各框架在'少量确定性步骤"])
+  ev_6aa45910_e7fc66(["microsoft.com 就「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用"])
+  ev_6aa45911_98de04(["mozilla.org 就「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用'这"])
+  ev_6aa45924_7e6ae3(["microsoft.com 就「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用"])
+  ev_6aa45924_bf41a2(["(弱相关，标题/摘要未命中查询词) 检索「现状与主流方案是什么 各框架在'少量确定性步骤"])
+  ev_6aa45924_e803ab(["(弱相关，标题/摘要未命中查询词) 检索「现状与主流方案是什么 各框架在'少量确定性步骤"])
+  ev_6aa45925_546b53(["mozilla.org 就「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用'这"])
+  ev_6aa45937_0d9121(["检索「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用'这类工作流上的抽象差异是"])
+  ev_6aa45937_6c0465(["(弱相关，标题/摘要未命中查询词) 检索「现状与主流方案是什么 各框架在'少量确定性步骤"])
+  ev_6aa45937_885387(["检索「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用'这类工作流上的抽象差异是"])
+  ev_6aa45937_b34b65(["检索「现状与主流方案是什么 各框架在'少量确定性步骤 工具调用'这类工作流上的抽象差异是"])
+  goal -->|decomposes_into| q1
+  q1 -->|decomposes_into| q1-landscape
+  q1 -->|decomposes_into| q1-architecture
+  q1 -->|decomposes_into| q1-practice
+  q1 -->|decomposes_into| q1-tradeoff
+  goal -->|decomposes_into| q2
+  q2 -->|decomposes_into| q2-landscape
+  q2 -->|decomposes_into| q2-architecture
+  q2 -->|decomposes_into| q2-practice
+  q2 -->|decomposes_into| q2-tradeoff
+  goal -->|decomposes_into| q3
+  q3 -->|decomposes_into| q3-landscape
+  q3 -->|decomposes_into| q3-architecture
+  q3 -->|decomposes_into| q3-practice
+  q3 -->|decomposes_into| q3-tradeoff
+  goal -->|decomposes_into| q4
+  q4 -->|decomposes_into| q4-landscape
+  q4 -->|decomposes_into| q4-architecture
+  q4 -->|decomposes_into| q4-practice
+  q4 -->|decomposes_into| q4-tradeoff
+  goal -->|relates_to| con-只能使用本地-mcp-服务获取外部资料-禁止上传
+  goal -->|relates_to| con-结论必须有可追溯来源与置信度-单个来源不得支撑关
+  goal -->|relates_to| con-需给出-6-周内的迁移路线与回滚方案
+  ev_6aa4586f_1f15a2 -->|supports| q1
+  ev_6aa4586f_e6d999 -->|supports| q1
+  q1-landscape -->|blocks| gap-task_6aa458fa_0aa5ed
+  q1-tradeoff -->|blocks| gap-task_6aa458fa_4acf2a
+  q2-architecture -->|blocks| gap-task_6aa458fa_8c0eea
+  q1-practice -->|blocks| gap-task_6aa458fa_b529c0
+  q1-architecture -->|blocks| gap-task_6aa458fa_e1794b
+  q4 -->|blocks| gap-task_6aa458fa_2d9d35
+  ev_6aa4590d_ebffad -->|supports| q1-landscape
+  ev_6aa4590d_702015 -->|supports| q1-landscape
+  ev_6aa45910_e7fc66 -->|supports| q1-landscape
+  ev_6aa45911_98de04 -->|supports| q1-landscape
+  ev_6aa45924_bf41a2 -->|supports| q1-landscape
+  ev_6aa45924_e803ab -->|supports| q1-landscape
+  ev_6aa45924_7e6ae3 -->|supports| q1-landscape
+  ev_6aa45925_546b53 -->|supports| q1-landscape
+  ev_6aa45937_0d9121 -->|supports| q1-landscape
+  ev_6aa45937_b34b65 -->|supports| q1-landscape
+  ev_6aa45937_885387 -->|supports| q1-landscape
+  ev_6aa45937_6c0465 -->|supports| q1-landscape
+  q1-landscape -->|derived_from| c1
+  q1-architecture -->|derived_from| c2
+  q1-tradeoff -->|derived_from| c3
+  q1-practice -->|derived_from| c4
+  q2-architecture -->|derived_from| c5
+  q3-tradeoff -->|derived_from| c6
+  q1 -->|derived_from| d1
+  q1 -->|derived_from| r1
+  q2 -->|derived_from| r2
+  q3 -->|derived_from| r3
+  c6 -->|relates_to| c4
+  d1 -->|answers| goal
+  r1 -->|relates_to| c1
+  r3 -->|relates_to| c6
+  q1 -->|derived_from| g-rejected-standalone-loop
+  g-rejected-standalone-loop -->|relates_to| d1
+  q4-practice -->|derived_from| c7
+  c7 -->|relates_to| r1
+  q3 -->|derived_from| g-benchmark-missing
+  g-benchmark-missing -->|blocks| d1
+  q2-architecture -->|derived_from| c8
+  q3-tradeoff -->|derived_from| c9
+  q4-landscape -->|derived_from| g-no-postmortems
+  g-no-postmortems -->|relates_to| c1
+  c8 -->|refines| c5

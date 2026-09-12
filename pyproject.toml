@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexussearch-agent-skill"
+version = "1.2.1"
+description = "Graph-driven multi-agent deep research skill for local MCP servers"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "NexusSearch Team" }]
+keywords = ["deep-research", "agent-skill", "mcp", "knowledge-graph", "local-first"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Text Processing :: Indexing",
+]
+
+
+# Distribution model: an Agent Skill is installed by copying its directory, so
+# `install.sh` / `cp -R` is the supported path and `pip install .` only provides the
+# `nexus` CLI (the skill payload itself is not rewritten into the wheel).
+# The runtime is deliberately stdlib-only so the skill works in any IDE agent
+# sandbox. `yaml` and `jsonschema` are optional: without them the runtime falls
+# back to a minimal YAML reader and skips JSON-Schema validation.
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6.0"]
+schemas = ["jsonschema>=4.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+nexus = "runtime.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/JIULANG9/NexusSearch-Agent-Skill"
+Documentation = "https://github.com/JIULANG9/NexusSearch-Agent-Skill/blob/main/docs/QUICKSTART.md"
+Changelog = "https://github.com/JIULANG9/NexusSearch-Agent-Skill/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["runtime"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+runtime = ["../config/*.yaml", "../schemas/*.json", "../agents/*.md", "../workflows/*.md", "../templates/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# browser MCP servers drop traces into the repo cwd
+.playwright-mcp/
+
+# research runs are workspace artefacts, never source
+runs/
+.online/
+state/cache/
+*.graph.json.bak
+
+# never commit credentials or local env
+.env
+.env.*
+*.token
+
+# build and packaging litter
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+
+# private: business documents and local work journal, never published
+Documentation/
+TimeLine.md

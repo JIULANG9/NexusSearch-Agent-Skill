@@ -1,0 +1,87 @@
+version: 1
+id: nexussearch.settings
+skill:
+  name: nexus-deep-research
+  display_name: NexusSearch Deep Research
+  version: 1.2.1
+  license: MIT
+
+# Research Loop (PRP section 6). Any single stop condition ends the loop.
+loop:
+  confidence_threshold: 0.85
+  max_iterations: 5
+  min_iterations: 1
+  # A question/topic node is "covered" when its weighted evidence score clears this.
+  node_coverage: 0.7
+  # If an iteration adds no new evidence or raises confidence by less than this,
+  # the loop stops early (diminishing returns) instead of burning tokens.
+  min_gain: 0.03
+  max_open_tasks_per_iteration: 6
+  stop_conditions:
+    - confidence_threshold_reached
+    - max_iterations_reached
+    - quality_gate_passed
+    - diminishing_returns
+    - budget_exhausted
+    - user_abort
+
+# Budgets keep a research run predictable and local-only.
+budgets:
+  max_total_tool_calls: 120
+  max_tool_calls_per_iteration: 40
+  max_wall_clock_minutes: 45
+  max_evidence_items: 200
+  max_new_nodes_per_iteration: 40
+
+workspace:
+  layout:
+    - input
+    - input/docs
+    - input/files
+    - graph
+    - evidence
+    - agents/logs
+    - output
+    - memory
+    - state
+  files:
+    plan: state/research-plan.json
+    graph: graph/research.graph.json
+    evidence: evidence/sources.json
+    claims: evidence/claims.json
+    state: state/state.json
+    audit: agents/logs/tool-calls.jsonl
+    loop_log: agents/logs/loop.jsonl
+    report: output/report.md
+    evidence_json: output/evidence.json
+    graph_json: output/graph.json
+    manifest: output/manifest.json
+  sandbox_write: true
+
+persistence:
+  graph_format: json
+  sqlite_index: true
+  atomic_writes: true
+  keep_iterations: true
+
+report:
+  template: templates/report.md
+  formats: [markdown, json]
+  optional_formats: [html]
+  include_mermaid: true
+  include_evidence_appendix: true
+  language: auto
+  max_pages_hint: 40
+
+privacy:
+  local_first: true
+  never_publish: [input/, source code, .env, credentials, private keys]
+  redact_in_logs: [token, secret, password, api_key, authorization, cookie]
+  forbid_external_upload: true
+
+multimodal:
+  enabled: true
+  image_evidence: true
+  capture_dir: evidence/captures
+  max_capture_bytes: 5242880
+  inline_vision: true

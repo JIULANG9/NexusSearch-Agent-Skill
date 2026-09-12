@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "objective": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型",
+  "title": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选",
+  "scope": "评估把 `examples/demo-project` 中手写的阻塞式 LLM 调用改造为 Agent 编排的可行性；并在 LangGraph、AutoGen (AG2)、OpenAI Agents SDK、MCP 自建循环四个方案中做出选型 (workspace: demo-project)",
+  "constraints": [
+    "只能使用本地 MCP 服务获取外部资料，禁止上传任何源码或数据。",
+    "结论必须有可追溯来源与置信度，单个来源不得支撑关键结论。",
+    "需给出 6 周内的迁移路线与回滚方案。"
+  ],
+  "non_goals": [],
+  "questions": [
+    {
+      "id": "q1",
+      "text": "各框架在\"少量确定性步骤 + 工具调用\"这类工作流上的抽象差异是什么？",
+      "kind": "procedural",
+      "key": true,
+      "priority": 1,
+      "capability_hint": "web.discovery",
+      "topics": [
+        "mcp",
+        "ag2",
+        "autogen",
+        "langgraph"
+      ],
+      "search_strategy": [
+        "mcp ag2 autogen official documentation",
+        "mcp ag2 autogen 2026 comparison",
+        "mcp ag2 autogen specification",
+        "mcp ag2 autogen limitations criticism"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "流式输出与失败重试在四个方案中的成熟度如何？",
+      "kind": "procedural",
+      "key": true,
+      "priority": 1,
+      "capability_hint": "web.discovery",
+      "topics": [
+        "mcp",
+        "ag2",
+        "autogen",
+        "langgraph"
+      ],
+      "search_strategy": [
+        "ag2 autogen langgraph official documentation",
+        "ag2 autogen langgraph 2026 comparison",
+        "ag2 autogen langgraph specification",
+        "ag2 autogen langgraph limitations criticism"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "迁移到编排框架后，延迟与运维成本会增加多少？",
+      "kind": "factual",
+      "key": true,
+      "priority": 1,
+      "capability_hint": "web.discovery",
+      "topics": [
+        "mcp",
+        "ag2",
+        "autogen",
+        "langgraph"
+      ],
+      "search_strategy": [
+        "autogen langgraph llm official documentation",
+        "autogen langgraph llm 2026 comparison",
+        "autogen langgraph llm specification",
+        "autogen langgraph llm limitations criticism"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "有哪些公开的生产事故或反例说明不应引入编排框架？",
+      "kind": "factual",
+      "key": false,
+      "priority": 2,
+      "capability_hint": "web.discovery",
+      "topics": [
+        "mcp",
+        "ag2",
+        "autogen",
+        "langgraph"
+      ],
+      "search_strategy": [
+        "langgraph llm openai official documentation",
+        "langgraph llm openai 2026 comparison",
+        "langgraph llm openai specification",
+        "langgraph llm openai limitations criticism"
+      ]
+    }
+  ],
+  "sources": [],
+  "context_inputs": [
+    {
+      "path": "/tmp/nx-demo3/input/spec.md",
+      "kind": "spec",
+      "role": "research specification"
+    }
+  ],
+  "spec_documents": [
+    "/tmp/nx-demo3/input/spec.md"
+  ],
+  "deliverables": [
+    "output/report.md",
+    "output/evidence.json",
+    "output/graph.json"
+  ],
+  "success_criteria": [
+    "quality gate passed",
+    "every key claim backed by 2+ independent sources"
+  ],
+  "mode": "standard",
+  "language": "auto",
+  "workspace": "$HOME/WorkSpace/Project/NexusSearch-Agent-Skill/examples/demo-project",
+  "keywords": [
+    "mcp",
+    "ag2",
+    "autogen",
+    "langgraph",
+    "llm",
+    "openai",
+    "中做出选型",
+    "中手写的阻塞式",
+    "并在",
+    "编排的可行性"
+  ],
+  "context": {
+    "root": "$HOME/WorkSpace/Project/NexusSearch-Agent-Skill/examples/demo-project",
+    "name": "demo-project",
+    "file_count": 7,
+    "line_count": 79,
+    "languages": [
+      {
+        "language": "python",
+        "files": 4,
+        "lines": 79
+      },
+      {
+        "language": "markdown",
+        "files": 2,
+        "lines": 0
+      }
+    ],
+    "manifests": [
+      "requirements.txt"
+    ],
+    "entrypoints": [
+      "src/app.py"
+    ],
+    "tests": [
+      "tests/test_smoke.py"
+    ],
+    "docs": [
+      "README.md",
+      "docs/DECISIONS.md"
+    ],
+    "skills": []
+  },
+  "context_summary": "7 files | python:4, markdown:2 | manifests: requirements.txt | entrypoints: app.py",
+  "created_at": "2026-09-11T19:39:26+00:00",
+  "skill": {
+    "name": "nexus-deep-research",
+    "version": "1.0.0"
+  }
+}
