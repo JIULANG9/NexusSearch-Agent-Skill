@@ -28,3 +28,10 @@ dist/
 # private: business documents and local work journal, never published
 Documentation/
 TimeLine.md
+
+# research workspace artefacts: input context and output deliverables
+# kept together in the same workspace directory for convenience
+input/
+output/
+!examples/*/input/
+!examples/*/output/
